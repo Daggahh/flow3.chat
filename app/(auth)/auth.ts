@@ -1,7 +1,8 @@
 import { compare } from 'bcrypt-ts';
 import NextAuth, { type DefaultSession } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
-import { createGuestUser, getUser } from '@/lib/db/queries';
+import Google from 'next-auth/providers/google';
+import { createGuestUser, getUser, createUser } from '@/lib/db/queries';
 import { authConfig } from './auth.config';
 import { DUMMY_PASSWORD } from '@/lib/constants';
 import type { DefaultJWT } from 'next-auth/jwt';
@@ -38,6 +39,10 @@ export const {
 } = NextAuth({
   ...authConfig,
   providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     Credentials({
       credentials: {},
       async authorize({ email, password }: any) {
@@ -72,10 +77,26 @@ export const {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account }) {
+      // For Google OAuth, ensure user exists in our database
+      if (account?.provider === 'google') {
+        const [existingUser] = await getUser(user.email!);
+        if (!existingUser) {
+          // Create user without password since they'll use OAuth
+          await createUser(user.email!, DUMMY_PASSWORD);
+        }
+      }
+      return true;
+    },
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id as string;
         token.type = user.type;
+      }
+
+      // For Google OAuth users, always set type as regular
+      if (account?.provider === 'google') {
+        token.type = 'regular';
       }
 
       return token;

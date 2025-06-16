@@ -1,43 +1,45 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useActionState, useEffect, useState } from 'react';
-import { toast } from '@/components/toast';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useState } from "react";
+import { toast } from "@/components/toast";
 
-import { AuthForm } from '@/components/auth-form';
-import { SubmitButton } from '@/components/submit-button';
+import { AuthForm } from "@/components/auth-form";
+import { SubmitButton } from "@/components/submit-button";
+import { GoogleSignInButton } from "@/components/google-sign-in-button";
+import { BackToChatButton } from "@/components/back-to-chat-button";
 
-import { login, type LoginActionState } from '../actions';
-import { useSession } from 'next-auth/react';
+import { login, type LoginActionState } from "../actions";
+import { useSession } from "next-auth/react";
 
 export default function Page() {
   const router = useRouter();
 
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [isSuccessful, setIsSuccessful] = useState(false);
 
   const [state, formAction] = useActionState<LoginActionState, FormData>(
     login,
     {
-      status: 'idle',
-    },
+      status: "idle",
+    }
   );
 
   const { update: updateSession } = useSession();
 
   useEffect(() => {
-    if (state.status === 'failed') {
+    if (state.status === "failed") {
       toast({
-        type: 'error',
-        description: 'Invalid credentials!',
+        type: "error",
+        description: "Invalid credentials!",
       });
-    } else if (state.status === 'invalid_data') {
+    } else if (state.status === "invalid_data") {
       toast({
-        type: 'error',
-        description: 'Failed validating your submission!',
+        type: "error",
+        description: "Failed validating your submission!",
       });
-    } else if (state.status === 'success') {
+    } else if (state.status === "success") {
       setIsSuccessful(true);
       updateSession();
       router.refresh();
@@ -45,7 +47,7 @@ export default function Page() {
   }, [state.status]);
 
   const handleSubmit = (formData: FormData) => {
-    setEmail(formData.get('email') as string);
+    setEmail(formData.get("email") as string);
     formAction(formData);
   };
 
@@ -60,6 +62,17 @@ export default function Page() {
         </div>
         <AuthForm action={handleSubmit} defaultEmail={email}>
           <SubmitButton isSuccessful={isSuccessful}>Sign in</SubmitButton>
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300 dark:border-zinc-700" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white dark:bg-background px-2 text-gray-500 dark:text-zinc-400">
+                Or continue with
+              </span>
+            </div>
+          </div>
+          <GoogleSignInButton />
           <p className="text-center text-sm text-gray-600 mt-4 dark:text-zinc-400">
             {"Don't have an account? "}
             <Link
@@ -68,9 +81,10 @@ export default function Page() {
             >
               Sign up
             </Link>
-            {' for free.'}
+            {" for free."}
           </p>
         </AuthForm>
+        <BackToChatButton />
       </div>
     </div>
   );
