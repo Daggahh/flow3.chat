@@ -16,19 +16,26 @@ const runMigrate = async () => {
 
   const connection = postgres(process.env.POSTGRES_URL, { max: 1 });
   const db = drizzle(connection);
-
   console.log('⏳ Running migrations...');
 
   const start = Date.now();
   await migrate(db, { migrationsFolder: './lib/db/migrations' });
+    // Check if RLS policies exist
+  const policyCheck = await db.execute(
+    `SELECT 1 FROM pg_policy WHERE polrelid = '"User"'::regclass LIMIT 1;`
+  ).catch(() => []);
   
-  // Run the RLS policies
-  console.log('⏳ Setting up Row Level Security policies...');
-  const rlsSql = await readFile(
-    join(process.cwd(), 'lib', 'db', 'migrations', '0007_auth_sync.sql'),
-    'utf-8',
-  );
-  await db.execute(rlsSql);
+  // Only apply RLS if policies don't exist
+  if (!policyCheck?.length) {
+    console.log('⏳ Setting up Row Level Security policies...');
+    const rlsSql = await readFile(
+      join(process.cwd(), 'lib', 'db', 'migrations', '0007_auth_sync.sql'),
+      'utf-8',
+    );
+    await db.execute(rlsSql);
+  } else {
+    console.log('✓ RLS policies already exist, skipping...');
+  }
   
   const end = Date.now();
 
