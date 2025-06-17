@@ -27,6 +27,7 @@ import {
   type DBMessage,
   type Chat,
   stream,
+  apiKey,
 } from './schema';
 import type { ArtifactKind } from '@/components/artifact';
 import { generateUUID } from '../utils';
@@ -535,4 +536,63 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
       'Failed to get stream ids by chat id',
     );
   }
+}
+
+interface SaveApiKeyParams {
+  userId: string;
+  provider: 'openai' | 'anthropic' | 'google' | 'mistral';
+  encryptedKey: string;
+}
+
+export async function saveApiKey({
+  userId,
+  provider,
+  encryptedKey,
+}: {
+  userId: string;
+  provider: 'openai' | 'anthropic' | 'google' | 'mistral';
+  encryptedKey: string;
+}): Promise<void> {
+  await db
+    .insert(apiKey)
+    .values({
+      userId,
+      provider,
+      encryptedKey,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: [apiKey.userId, apiKey.provider],
+      set: {
+        encryptedKey,
+        updatedAt: new Date(),
+      },
+    });
+}
+
+interface DeleteApiKeyParams {
+  userId: string;
+  provider: 'openai' | 'anthropic' | 'google' | 'mistral';
+}
+
+export async function deleteApiKey({
+  userId,
+  provider,
+}: DeleteApiKeyParams): Promise<void> {
+  await db
+    .delete(apiKey)
+    .where(
+      and(
+        eq(apiKey.userId, userId),
+        eq(apiKey.provider, provider)
+      )
+    );
+}
+
+export async function getApiKeysByUserId(userId: string) {
+  return db
+    .select()
+    .from(apiKey)
+    .where(eq(apiKey.userId, userId));
 }
