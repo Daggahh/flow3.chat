@@ -540,7 +540,7 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
 
 interface SaveApiKeyParams {
   userId: string;
-  provider: 'openai' | 'anthropic' | 'google' | 'mistral';
+  provider: 'openai' | 'anthropic' | 'google' | 'mistral' | 'openrouter' | 'grok' | 'cohere' | 'deepseek' | 'perplexity';
   encryptedKey: string;
 }
 
@@ -550,7 +550,7 @@ export async function saveApiKey({
   encryptedKey,
 }: {
   userId: string;
-  provider: 'openai' | 'anthropic' | 'google' | 'mistral';
+  provider: 'openai' | 'anthropic' | 'google' | 'mistral' | 'openrouter' | 'grok' | 'cohere' | 'deepseek' | 'perplexity';
   encryptedKey: string;
 }): Promise<void> {
   await db
@@ -573,7 +573,7 @@ export async function saveApiKey({
 
 interface DeleteApiKeyParams {
   userId: string;
-  provider: 'openai' | 'anthropic' | 'google' | 'mistral';
+  provider: 'openai' | 'anthropic' | 'google' | 'mistral' | 'openrouter' | 'grok' | 'cohere' | 'deepseek' | 'perplexity';
 }
 
 export async function deleteApiKey({

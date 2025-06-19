@@ -176,6 +176,11 @@ export const apiKeyProviderEnum = pgEnum('api_key_provider', [
   'anthropic',
   'google',
   'mistral',
+  'openrouter',
+  'grok',
+  'cohere',
+  'deepseek',
+  'perplexity',
 ]);
 
 export type ApiKeyProvider = (typeof apiKeyProviderEnum.enumValues)[number];

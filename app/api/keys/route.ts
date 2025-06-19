@@ -34,14 +34,14 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const provider = searchParams.get('provider');
 
-  if (!provider || !['openai', 'anthropic', 'google', 'mistral'].includes(provider)) {
+  if (!provider || !['openai', 'anthropic', 'google', 'mistral', 'openrouter', 'grok', 'cohere', 'deepseek', 'perplexity'].includes(provider)) {
     return new ChatSDKError('bad_request:api_keys').toResponse();
   }
 
   try {
     const result = await deleteApiKey({
       userId: session.user.id,
-      provider: provider as 'openai' | 'anthropic' | 'google' | 'mistral',
+      provider: provider as any,
     });
 
     return Response.json(result);

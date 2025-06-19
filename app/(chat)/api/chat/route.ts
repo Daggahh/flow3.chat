@@ -36,6 +36,7 @@ import { after } from 'next/server';
 import type { Chat } from '@/lib/db/schema';
 import { differenceInSeconds } from 'date-fns';
 import { ChatSDKError } from '@/lib/errors';
+import { webSearchTool } from '@/lib/ai/tools/web-search';
 
 export const maxDuration = 60;
 
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { id, message, selectedChatModel, selectedVisibilityType } =
+    const { id, message, selectedChatModel, selectedVisibilityType, useWebSearch } =
       requestBody;
 
     const session = await auth();
@@ -152,13 +153,22 @@ export async function POST(request: Request) {
           messages,
           maxSteps: 5,
           experimental_activeTools:
-            selectedChatModel === 'chat-model-reasoning'
-              ? []
+            useWebSearch
+              ? [
+                  'webSearch',
+                  'getWeather',
+                  'createDocument',
+                  'updateDocument',
+                  'requestSuggestions',
+                ]
+              : selectedChatModel === 'chat-model-reasoning'
+              ? ['webSearch']
               : [
                   'getWeather',
                   'createDocument',
                   'updateDocument',
                   'requestSuggestions',
+                  'webSearch',
                 ],
           experimental_transform: smoothStream({ chunking: 'word' }),
           experimental_generateMessageId: generateUUID,
@@ -170,6 +180,7 @@ export async function POST(request: Request) {
               session,
               dataStream,
             }),
+            webSearch: webSearchTool,
           },
           onFinish: async ({ response }) => {
             if (session.user?.id) {

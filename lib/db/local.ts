@@ -20,7 +20,16 @@ export interface LocalConversation {
   synced: boolean
 }
 
-export type ApiKeyProvider = "openai" | "anthropic" | "google" | "mistral"
+export type ApiKeyProvider =
+  | "openai"
+  | "anthropic"
+  | "google"
+  | "mistral"
+  | "openrouter"
+  | "grok"
+  | "cohere"
+  | "deepseek"
+  | "perplexity";
 
 export interface LocalApiKey {
   id: string
