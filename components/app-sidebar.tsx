@@ -158,7 +158,10 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>
       </Sidebar>
       {showApiKeySettings && (
-        <ApiKeySettings onClose={() => setShowApiKeySettings(false)} />
+        <ApiKeySettings
+          isOpen={showApiKeySettings}
+          onClose={() => setShowApiKeySettings(false)}
+        />
       )}
       <SearchThreadsModal
         isOpen={showSearchModal}

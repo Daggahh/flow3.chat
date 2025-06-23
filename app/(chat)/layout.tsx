@@ -5,6 +5,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { auth } from "../(auth)/auth";
 import Script from "next/script";
 import { OnboardingHandler } from "@/components/OnboardingHandler";
+import { ApiKeyProvider } from "@/hooks/use-api-keys";
 
 export const experimental_ppr = true;
 
@@ -23,10 +24,12 @@ export default async function Layout({
         strategy="beforeInteractive"
       />
       <SidebarProvider defaultOpen={!isCollapsed}>
-        <AppSidebar user={session?.user} />
-        <OnboardingHandler>
-          <SidebarInset>{children}</SidebarInset>
-        </OnboardingHandler>
+        <ApiKeyProvider>
+          <AppSidebar user={session?.user} />
+          <OnboardingHandler>
+            <SidebarInset>{children}</SidebarInset>
+          </OnboardingHandler>
+        </ApiKeyProvider>
       </SidebarProvider>
     </>
   );

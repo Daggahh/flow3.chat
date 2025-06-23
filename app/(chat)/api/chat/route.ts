@@ -37,6 +37,11 @@ import type { Chat } from '@/lib/db/schema';
 import { differenceInSeconds } from 'date-fns';
 import { ChatSDKError } from '@/lib/errors';
 import { webSearchTool } from '@/lib/ai/tools/web-search';
+import { cookies } from 'next/headers';
+import { getApiKeyByProvider } from '@/lib/db/queries/api-keys';
+import { GoogleProvider } from '@/lib/ai/providers/google';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+
 
 export const maxDuration = 60;
 
@@ -62,6 +67,21 @@ function getStreamContext() {
   return globalStreamContext;
 }
 
+// Utility: Check if a model is a Gemini model
+const GEMINI_MODELS = [
+  'gemini-1.5-pro',
+  'gemini-1.5-pro-latest',
+  'gemini-1.5-pro-001',
+  'gemini-1.5-pro-002',
+  'gemini-2.0-pro-exp-02-05',
+  'gemini-2.5-pro-preview-05-06',
+  'gemini-2.5-pro-exp-03-25',
+  'google/gemini-pro',
+];
+function isGeminiModel(modelId: string): boolean {
+  return GEMINI_MODELS.includes(modelId);
+}
+
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
 
@@ -77,6 +97,55 @@ export async function POST(request: Request) {
       requestBody;
 
     const session = await auth();
+    const cookieStore = await cookies();
+
+    // --- Gemini Free Tier Logic ---
+    let geminiApiKey: string | undefined = undefined;
+    let usingDefaultGeminiKey = false;
+    if (isGeminiModel(selectedChatModel)) {
+      let userHasGeminiKey = false;
+      if (session?.user) {
+        // Check if user has a Gemini key
+        const userGeminiKey = await getApiKeyByProvider({
+          userId: session.user.id,
+          provider: 'google',
+        });
+        if (userGeminiKey && userGeminiKey.encryptedKey) {
+          userHasGeminiKey = true;
+          // Decrypt the key if needed (assume decrypted for now)
+          geminiApiKey = userGeminiKey.encryptedKey;
+        }
+      }
+      if (!userHasGeminiKey && process.env.GOOGLE_DEFAULT_API_KEY) {
+        usingDefaultGeminiKey = true;
+        geminiApiKey = process.env.GOOGLE_DEFAULT_API_KEY;
+        // For guests, use a signed cookie to track message count
+        let guestMessageCount = 0;
+        let guestCookie = cookieStore.get('gemini_guest_count');
+        if (guestCookie) {
+          try {
+            const { count, ts } = JSON.parse(guestCookie.value);
+            // Reset after 24h
+            if (Date.now() - ts < 24 * 60 * 60 * 1000) {
+              guestMessageCount = count;
+            }
+          } catch {}
+        }
+        if (!session?.user && guestMessageCount >= 10) {
+          return new ChatSDKError('rate_limit:chat').toResponse();
+        }
+        // For signed-in users, use DB logic (already handled below)
+        if (!session?.user) {
+          // Increment and set cookie
+          cookieStore.set('gemini_guest_count', JSON.stringify({ count: guestMessageCount + 1, ts: Date.now() }), {
+            httpOnly: true,
+            maxAge: 24 * 60 * 60,
+            sameSite: 'lax',
+          });
+        }
+      }
+    }
+    // --- End Gemini Free Tier Logic ---
 
     if (!session?.user) {
       return new ChatSDKError('unauthorized:chat').toResponse();
@@ -147,8 +216,16 @@ export async function POST(request: Request) {
 
     const stream = createDataStream({
       execute: (dataStream) => {
+        let modelInstance;
+        if (isGeminiModel(selectedChatModel) && geminiApiKey) {
+          // Use the correct Gemini key for this request
+          const google = createGoogleGenerativeAI({ apiKey: geminiApiKey });
+          modelInstance = google.languageModel(selectedChatModel);
+        } else {
+          modelInstance = myProvider.languageModel(selectedChatModel);
+        }
         const result = streamText({
-          model: myProvider.languageModel(selectedChatModel),
+          model: modelInstance,
           system: systemPrompt({ selectedChatModel, requestHints }),
           messages,
           maxSteps: 5,

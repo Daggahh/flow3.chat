@@ -1,82 +1,77 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "./ui/dialog";
+import React, { useState } from "react";
+import { Dialog, DialogContent } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { useProviderIcon } from "@/hooks/use-provider-icon";
-import { toast } from "sonner";
+import { useApiKeys } from "@/hooks/use-api-keys";
+import { InfoIcon } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 const PROVIDERS = [
   {
     id: "openai",
     name: "OpenAI",
     placeholder: "sk-...",
-    helpText: "Find your API key in the OpenAI dashboard",
     helpLink: "https://platform.openai.com/account/api-keys",
+    helpText: "Find your API key in the OpenAI dashboard.",
   },
   {
     id: "anthropic",
     name: "Anthropic",
     placeholder: "sk-ant-...",
-    helpText: "Find your API key in the Anthropic console",
     helpLink: "https://console.anthropic.com/settings/keys",
+    helpText: "Find your API key in the Anthropic console.",
   },
   {
     id: "google",
-    name: "Google AI",
+    name: "Google Gemini",
     placeholder: "AIza...",
-    helpText: "Get your API key from Google AI Studio",
     helpLink: "https://makersuite.google.com/app/apikey",
+    helpText: "Get your API key from Google AI Studio.",
   },
   {
     id: "mistral",
-    name: "Mistral AI",
-    placeholder: "sk-...",
-    helpText: "Find your API key in the Mistral dashboard",
+    name: "Mistral",
+    placeholder: "mistral-...",
     helpLink: "https://console.mistral.ai/api-keys/",
+    helpText: "Find your API key in the Mistral dashboard.",
   },
   {
     id: "openrouter",
     name: "OpenRouter",
     placeholder: "or-...",
-    helpText: "Get your OpenRouter API key",
     helpLink: "https://openrouter.ai/keys",
+    helpText: "Get your API key from OpenRouter.",
   },
   {
     id: "grok",
-    name: "Grok (xAI)",
-    placeholder: "...",
-    helpText: "Get your Grok API key from xAI",
-    helpLink: "https://x.ai/",
+    name: "Grok",
+    placeholder: "grok-...",
+    helpLink: "https://x.ai/keys",
+    helpText: "Get your API key from xAI Grok.",
   },
   {
     id: "cohere",
     name: "Cohere",
-    placeholder: "...",
-    helpText: "Get your Cohere API key",
+    placeholder: "cohere-...",
     helpLink: "https://dashboard.cohere.com/api-keys",
+    helpText: "Find your API key in the Cohere dashboard.",
   },
   {
     id: "deepseek",
     name: "DeepSeek",
-    placeholder: "...",
-    helpText: "Get your DeepSeek API key",
+    placeholder: "deepseek-...",
     helpLink: "https://platform.deepseek.com/api-keys",
+    helpText: "Get your API key from DeepSeek.",
   },
   {
     id: "perplexity",
     name: "Perplexity",
-    placeholder: "...",
-    helpText: "Get your Perplexity API key",
-    helpLink: "https://www.perplexity.ai/settings/api",
+    placeholder: "pplx-...",
+    helpLink: "https://www.perplexity.ai/developer",
+    helpText: "Get your API key from Perplexity.",
   },
 ];
 
@@ -87,112 +82,111 @@ export function BYOKModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const [activeTab, setActiveTab] = useState(PROVIDERS[0].id);
-  const [inputs, setInputs] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(false);
+  const { apiKeys, saveApiKey, loading } = useApiKeys();
+  const [selectedProvider, setSelectedProvider] = useState(PROVIDERS[0].id);
+  const [input, setInput] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      setActiveTab(PROVIDERS[0].id);
-      setInputs({});
-    }
-  }, [isOpen]);
+  // Reset input when provider changes or modal opens
+  React.useEffect(() => {
+    setInput("");
+  }, [selectedProvider, isOpen]);
 
-  const handleInputChange = (provider: string, value: string) => {
-    setInputs((prev) => ({ ...prev, [provider]: value }));
-  };
+  const provider = PROVIDERS.find((p) => p.id === selectedProvider);
 
-  const handleSave = async (provider: string) => {
-    setLoading(true);
+  const handleSave = async () => {
+    setSaving(true);
     try {
-      const res = await fetch("/api/keys", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, apiKey: inputs[provider] }),
-      });
-      if (!res.ok) throw new Error("Failed to save key");
-      toast.success("API key saved!");
+      await saveApiKey(selectedProvider as any, input);
+      setInput("");
       onClose();
-    } catch (e) {
-      toast.error("Failed to save API key");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
+  // Responsive: vertical tab list on desktop, horizontal on mobile
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] bg-white dark:bg-zinc-900 text-foreground border-border">
-        <DialogHeader>
-          <DialogTitle className="text-xl">Add or Update API Key</DialogTitle>
-          <DialogDescription>
-            Bring your own key (BYOK) for any supported provider. Keys are
-            encrypted and only you can use them.
-          </DialogDescription>
-        </DialogHeader>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-          <TabsList className="grid w-full grid-cols-3 gap-1 p-1 bg-muted/40 rounded-full overflow-x-auto">
-            {PROVIDERS.map((provider) => (
-              <TabsTrigger
-                key={provider.id}
-                value={provider.id}
-                className="px-2 py-1.5 text-xs sm:text-sm font-medium rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all whitespace-nowrap flex items-center gap-1"
-              >
-                {useProviderIcon(provider.id)}
-                {provider.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+      <DialogContent className="max-w-3xl w-full p-0 bg-white dark:bg-zinc-900 rounded-xl shadow-xl flex flex-col md:flex-row overflow-visible animate-in fade-in zoom-in">
+        {/* Provider Tab List */}
+        <nav
+          className="md:w-56 w-full md:h-[500px] h-16 flex-row flex md:flex-col flex-nowrap md:overflow-y-auto overflow-x-auto border-r border-border/50 bg-muted/40 dark:bg-zinc-800/40 shrink-0"
+          style={{ minHeight: 64, maxHeight: 500 }}
+          aria-label="AI Providers"
+        >
           {PROVIDERS.map((provider) => (
-            <TabsContent
+            <button
               key={provider.id}
-              value={provider.id}
-              className="mt-6 space-y-4"
+              className={`flex items-center gap-2 px-4 py-3 md:py-2 md:px-4 text-sm font-medium transition-colors whitespace-nowrap md:w-full md:rounded-none rounded-lg focus:outline-none focus:bg-primary/10 ${
+                selectedProvider === provider.id
+                  ? "bg-primary/10 text-primary"
+                  : "hover:bg-muted/60 dark:hover:bg-zinc-800/60"
+              }`}
+              onClick={() => setSelectedProvider(provider.id)}
+              aria-selected={selectedProvider === provider.id}
+              tabIndex={0}
+              type="button"
             >
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label htmlFor={`${provider.id}-key`} className="font-medium">
-                    {provider.name} API Key
-                  </label>
-                  <a
-                    href={provider.helpLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-muted-foreground hover:underline"
-                  >
-                    Get API key
-                  </a>
-                </div>
-                <Input
-                  id={`${provider.id}-key`}
-                  type="password"
-                  placeholder={provider.placeholder}
-                  value={inputs[provider.id] || ""}
-                  onChange={(e) =>
-                    handleInputChange(provider.id, e.target.value)
-                  }
-                  className="bg-muted/40 border-border"
-                  disabled={loading}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {provider.helpText}
-                </p>
-              </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <Button variant="outline" onClick={onClose} disabled={loading}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => handleSave(provider.id)}
-                  disabled={!inputs[provider.id] || loading}
-                  className="bg-primary text-primary-foreground"
-                >
-                  Save
-                </Button>
-              </div>
-            </TabsContent>
+              <span className="w-5 h-5 flex items-center justify-center">
+                {useProviderIcon(provider.id)}
+              </span>
+              <span>{provider.name}</span>
+            </button>
           ))}
-        </Tabs>
+        </nav>
+        {/* Main Content */}
+        <main className="flex-1 flex flex-col items-center justify-center p-8">
+          <h2 className="text-lg font-bold mb-2">Add or Update API Key</h2>
+          <div className="flex flex-col gap-4 w-full max-w-md">
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-sm font-medium" htmlFor="api-key-input">
+                {provider?.name} API Key
+              </label>
+              {provider?.helpLink && (
+                <a
+                  href={provider.helpLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-600 hover:underline ml-2"
+                >
+                  Get API key
+                </a>
+              )}
+            </div>
+            <Input
+              id="api-key-input"
+              type="password"
+              placeholder={provider?.placeholder}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={saving || loading}
+              className="w-full"
+              autoFocus
+            />
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center cursor-pointer">
+                    <InfoIcon className="w-4 h-4 mr-1" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{provider?.helpText}</TooltipContent>
+              </Tooltip>
+              <span>{provider?.helpText}</span>
+            </div>
+            <Button
+              onClick={handleSave}
+              disabled={!input || saving || loading}
+              className="w-full"
+            >
+              {saving ? "Saving..." : "Save Key"}
+            </Button>
+            <Button variant="outline" onClick={onClose} className="w-full">
+              Cancel
+            </Button>
+          </div>
+        </main>
       </DialogContent>
     </Dialog>
   );

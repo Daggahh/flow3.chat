@@ -124,7 +124,10 @@ export function SidebarUserNav({ user }: { user: User }) {
         </DropdownMenu>
       </SidebarMenuItem>
       {showApiKeySettings && (
-        <ApiKeySettings onClose={() => setShowApiKeySettings(false)} />
+        <ApiKeySettings
+          isOpen={showApiKeySettings}
+          onClose={() => setShowApiKeySettings(false)}
+        />
       )}
     </SidebarMenu>
   );
