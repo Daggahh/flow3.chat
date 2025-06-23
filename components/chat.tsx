@@ -69,8 +69,11 @@ export function Chat({
       message: body.messages.at(-1),
       selectedChatModel: initialChatModel,
       selectedVisibilityType: visibilityType,
-      ...(body.options?.useWebSearch !== undefined
-        ? { useWebSearch: body.options.useWebSearch }
+      ...(typeof body.requestData === "object" &&
+      body.requestData !== null &&
+      "useWebSearch" in body.requestData &&
+      typeof (body.requestData as any).useWebSearch === "boolean"
+        ? { useWebSearch: (body.requestData as any).useWebSearch }
         : {}),
     }),
     onFinish: () => {
@@ -145,6 +148,7 @@ export function Chat({
           {!isReadonly && (
             <MultimodalInput
               chatId={id}
+              session={session}
               input={input}
               setInput={setInput}
               handleSubmit={handleSubmit}

@@ -21,11 +21,13 @@ import { useHotkeys } from "@/hooks/use-hotkeys";
 import Link from "next/link";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { SearchThreadsModal } from "./search-threads-modal";
+import { ApiKeySettings } from "./ApiKeySettings";
 
 export function AppSidebar({ user }: { user: User | undefined }) {
   const router = useRouter();
-  const { setOpenMobile } = useSidebar();
+  const { setOpenMobile, open } = useSidebar();
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showApiKeySettings, setShowApiKeySettings] = useState(false);
   // Keyboard shortcuts
   useHotkeys([
     [
@@ -37,14 +39,18 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         router.refresh();
       },
     ],
-    [
-      "mod+k",
-      (e) => {
-        e.preventDefault();
-        setShowSearchModal(true);
-      },
-    ],
   ]);
+  useEffect(() => {
+    if (!open) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setShowSearchModal(true);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   // Close search modal with Escape key
   useEffect(() => {
@@ -151,6 +157,9 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         </SidebarContent>
         <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>
       </Sidebar>
+      {showApiKeySettings && (
+        <ApiKeySettings onClose={() => setShowApiKeySettings(false)} />
+      )}
       <SearchThreadsModal
         isOpen={showSearchModal}
         onClose={() => setShowSearchModal(false)}

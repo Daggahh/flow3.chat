@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 type SyncItem = {
   id: string;
-  type: 'chat' | 'message' | 'api_key';
+  type: 'chat' | 'message' | 'api_key' | 'model_favourite';
   action: 'create' | 'update' | 'delete';
   timestamp: Date;
   data: any;
@@ -107,6 +107,7 @@ export class SyncManager {
       case 'api_key': return '/api/keys';
       case 'chat': return '/api/chat';
       case 'message': return '/api/messages';
+      case 'model_favourite': return '/api/model-favourites';
       default: throw new Error(`Unknown sync type: ${type}`);
     }
   }
@@ -130,6 +131,9 @@ export class SyncManager {
         break;
       case 'message':
         await db.messages.update(item.id, { synced: true });
+        break;
+      case 'model_favourite':
+        await db.model_favourites.update(item.id, { synced: true });
         break;
     }
   }

@@ -27,7 +27,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown } from "lucide-react";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import type { VisibilityType } from "./visibility-selector";
-import { Search as SearchIcon } from "lucide-react";
+import { Search as SearchIcon, GlobeIcon } from "lucide-react";
+import { useProviderIcon } from "@/hooks/use-provider-icon";
+import { ModelSelector } from "./model-selector";
+import type { Session } from "next-auth";
 
 function PureMultimodalInput({
   chatId,
@@ -43,6 +46,7 @@ function PureMultimodalInput({
   handleSubmit,
   className,
   selectedVisibilityType,
+  session,
 }: {
   chatId: string;
   input: UseChatHelpers["input"];
@@ -57,6 +61,7 @@ function PureMultimodalInput({
   handleSubmit: UseChatHelpers["handleSubmit"];
   className?: string;
   selectedVisibilityType: VisibilityType;
+  session: Session;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -112,13 +117,15 @@ function PureMultimodalInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
   const [useWebSearch, setUseWebSearch] = useState(false);
+  const [selectedModelId, setSelectedModelId] = useState("gpt-4o");
+  const [showModelSelector, setShowModelSelector] = useState(false);
 
   const submitForm = useCallback(() => {
     window.history.replaceState({}, "", `/chat/${chatId}`);
 
     handleSubmit(undefined, {
       experimental_attachments: attachments,
-      useWebSearch,
+      data: { useWebSearch },
     });
 
     setAttachments([]);
@@ -304,17 +311,45 @@ function PureMultimodalInput({
       />
 
       <div className="absolute bottom-0 p-2 w-fit flex flex-row justify-start">
+        <div className="relative">
+          <Button
+            data-testid="model-selector-inline"
+            className="rounded-md p-[7px] h-fit mr-2 flex items-center gap-2"
+            variant="outline"
+            onClick={(e) => {
+              e.preventDefault();
+              setShowModelSelector((v) => !v);
+            }}
+          >
+            {useProviderIcon("openai")}
+            <span className="ml-1">{selectedModelId}</span>
+          </Button>
+          {showModelSelector && (
+            <ModelSelector
+              session={session}
+              selectedModelId={selectedModelId}
+              onSelect={(id) => {
+                setSelectedModelId(id);
+                setShowModelSelector(false);
+              }}
+            />
+          )}
+        </div>
         <Button
           data-testid="web-search-button"
           className={cx(
-            "rounded-md rounded-bl-lg p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200 mr-2",
+            "rounded-md p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200 mr-2 flex items-center gap-1",
             useWebSearch ? "bg-blue-100 dark:bg-blue-900 text-blue-700" : ""
           )}
-          onClick={handleWebSearch}
+          onClick={(e) => {
+            e.preventDefault();
+            handleWebSearch();
+          }}
           disabled={!input.trim()}
           variant="ghost"
         >
-          <SearchIcon size={14} />
+          <GlobeIcon size={14} />
+          <span className="ml-1 hidden md:inline">Web Search</span>
         </Button>
         <AttachmentsButton fileInputRef={fileInputRef} status={status} />
       </div>
@@ -342,7 +377,7 @@ export const MultimodalInput = memo(
     if (!equal(prevProps.attachments, nextProps.attachments)) return false;
     if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType)
       return false;
-
+    if (prevProps.session !== nextProps.session) return false;
     return true;
   }
 );

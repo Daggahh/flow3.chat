@@ -40,7 +40,17 @@ export function SearchThreadsModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Search Chat History</DialogTitle>
+          <div className="flex items-center justify-between w-full">
+            <DialogTitle>Search Chat History</DialogTitle>
+            <button
+              className="ml-4 px-2 py-0.5 text-xs rounded bg-muted text-muted-foreground hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+              onClick={onClose}
+              aria-label="Close (Esc)"
+              type="button"
+            >
+              Esc
+            </button>
+          </div>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
