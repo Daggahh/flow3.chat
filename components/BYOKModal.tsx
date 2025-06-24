@@ -143,6 +143,7 @@ export function BYOKModal({
               <label className="text-sm font-medium" htmlFor="api-key-input">
                 {provider?.name} API Key
               </label>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {provider?.helpLink && (
                 <a
                   href={provider.helpLink}
@@ -153,6 +154,15 @@ export function BYOKModal({
                   Get API key
                 </a>
               )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center cursor-pointer">
+                    <InfoIcon className="w-4 h-4 mr-1" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{provider?.helpText}</TooltipContent>
+              </Tooltip>
+            </div>
             </div>
             <Input
               id="api-key-input"
@@ -164,17 +174,6 @@ export function BYOKModal({
               className="w-full"
               autoFocus
             />
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex items-center cursor-pointer">
-                    <InfoIcon className="w-4 h-4 mr-1" />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{provider?.helpText}</TooltipContent>
-              </Tooltip>
-              <span>{provider?.helpText}</span>
-            </div>
             <Button
               onClick={handleSave}
               disabled={!input || saving || loading}

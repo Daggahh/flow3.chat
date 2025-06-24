@@ -15,12 +15,14 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
-
-import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
-import { PreviewAttachment } from "./preview-attachment";
-import { Button } from "./ui/button";
-import { Textarea } from "./ui/textarea";
-import { SuggestedActions } from "./suggested-actions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { SuggestedActions } from "@/components/suggested-actions";
 import equal from "fast-deep-equal";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -29,8 +31,17 @@ import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import type { VisibilityType } from "./visibility-selector";
 import { Search as SearchIcon, GlobeIcon } from "lucide-react";
 import { useProviderIcon } from "@/hooks/use-provider-icon";
-import { ModelSelector } from "./model-selector";
+import {
+  ModelSelectorQuickPick,
+  ModelSelectorFullCatalog,
+} from "./model-selector";
 import type { Session } from "next-auth";
+import { chatModels, ChatModel } from "@/lib/ai/models";
+import { entitlementsByUserType } from "@/lib/ai/entitlements";
+import { db } from "@/lib/db/local";
+import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
+import { PreviewAttachment } from "./preview-attachment";
+import { FiChevronDown } from "react-icons/fi";
 
 function PureMultimodalInput({
   chatId,
@@ -119,6 +130,49 @@ function PureMultimodalInput({
   const [useWebSearch, setUseWebSearch] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState("gpt-4o");
   const [showModelSelector, setShowModelSelector] = useState(false);
+  const [showFullCatalog, setShowFullCatalog] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<string | null>(null);
+  const [favourites, setFavourites] = useState<ChatModel[]>([]);
+
+  // Get available models for the user
+  const userType = session.user.type;
+  const availableChatModelIds =
+    entitlementsByUserType[userType].availableModels;
+  const availableChatModels = chatModels.filter((chatModel) =>
+    availableChatModelIds.includes(chatModel.id)
+  );
+
+  // Load favourites from IndexedDB
+  useEffect(() => {
+    db.model_favourites.toArray().then((favs) => {
+      setFavourites(
+        favs
+          .map((f) => availableChatModels.find((m) => m.id === f.modelId))
+          .filter((m): m is ChatModel => Boolean(m))
+      );
+    });
+  }, [availableChatModels]);
+
+  const handlePin = async (id: string) => {
+    if (favourites.length >= 10) {
+      toast.error("You can only pin up to 10 models.");
+      return;
+    }
+    const model = availableChatModels.find((m) => m.id === id);
+    if (!model) return;
+    await db.model_favourites.add({
+      id: `${id}-fav`,
+      modelId: id,
+      createdAt: new Date(),
+      synced: false,
+    });
+    setFavourites((favs) => [...favs, model]);
+  };
+  const handleUnpin = async (id: string) => {
+    await db.model_favourites.where("modelId").equals(id).delete();
+    setFavourites((favs) => favs.filter((f) => f.id !== id));
+  };
 
   const submitForm = useCallback(() => {
     window.history.replaceState({}, "", `/chat/${chatId}`);
@@ -312,28 +366,73 @@ function PureMultimodalInput({
 
       <div className="absolute bottom-0 p-2 w-fit flex flex-row justify-start">
         <div className="relative">
-          <Button
-            data-testid="model-selector-inline"
-            className="rounded-md p-[7px] h-fit mr-2 flex items-center gap-2"
-            variant="outline"
-            onClick={(e) => {
-              e.preventDefault();
-              setShowModelSelector((v) => !v);
-            }}
+          <DropdownMenu
+            open={showModelSelector}
+            onOpenChange={setShowModelSelector}
           >
-            {useProviderIcon("openai")}
-            <span className="ml-1">{selectedModelId}</span>
-          </Button>
-          {showModelSelector && (
-            <ModelSelector
-              session={session}
-              selectedModelId={selectedModelId}
-              onSelect={(id) => {
-                setSelectedModelId(id);
-                setShowModelSelector(false);
-              }}
-            />
-          )}
+            <DropdownMenuTrigger asChild>
+              <Button
+                data-testid="model-selector-inline"
+                className="rounded-md p-[7px] h-fit mr-2 flex items-center gap-2"
+                variant="outline"
+              >
+                {useProviderIcon(
+                  availableChatModels.find((m) => m.id === selectedModelId)
+                    ?.provider || ""
+                )}
+                <span className="ml-1">{selectedModelId}</span>
+                <FiChevronDown
+                  className={
+                    "ml-1 transition-transform duration-200" +
+                    (showModelSelector ? " rotate-180" : "")
+                  }
+                  size={18}
+                />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              side="top"
+              align="start"
+              className="p-0 w-[40rem] max-w-[90vw] !overflow-visible"
+            >
+              {!showFullCatalog ? (
+                <ModelSelectorQuickPick
+                  availableModels={availableChatModels}
+                  favourites={favourites}
+                  onSelect={(id) => {
+                    setSelectedModelId(id);
+                    setShowModelSelector(false);
+                  }}
+                  onShowAll={() => setShowFullCatalog(true)}
+                  search={search}
+                  setSearch={setSearch}
+                  filter={filter}
+                  setFilter={setFilter}
+                  onPin={handlePin}
+                  onUnpin={handleUnpin}
+                  selectedModelId={selectedModelId}
+                />
+              ) : (
+                <ModelSelectorFullCatalog
+                  availableModels={availableChatModels}
+                  favourites={favourites}
+                  onSelect={(id) => {
+                    setSelectedModelId(id);
+                    setShowFullCatalog(false);
+                    setShowModelSelector(false);
+                  }}
+                  onBack={() => setShowFullCatalog(false)}
+                  search={search}
+                  setSearch={setSearch}
+                  filter={filter}
+                  setFilter={setFilter}
+                  onPin={handlePin}
+                  onUnpin={handleUnpin}
+                  selectedModelId={selectedModelId}
+                />
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <Button
           data-testid="web-search-button"
