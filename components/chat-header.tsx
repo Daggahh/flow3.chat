@@ -70,7 +70,7 @@ function PureChatHeader({
           <TooltipTrigger asChild>
             <Button
               variant="outline"
-              className="order-2 md:order-1 md:px-2 px-2 md:h-fit ml-auto md:ml-0 transition-transform hover:scale-105 focus:scale-105"
+              className="order-2 md:order-1 md:px-2 px-2 md:h-fit ml-auto md:ml-0 transition-transform hover:scale-105 focus:scale-105 group hover:rotate-90 duration-300"
               onClick={() => {
                 router.push("/");
                 router.refresh();

@@ -128,7 +128,7 @@ function PureMultimodalInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
   const [useWebSearch, setUseWebSearch] = useState(false);
-  const [selectedModelId, setSelectedModelId] = useState("gpt-4o");
+  const [selectedModelId, setSelectedModelIdState] = useState<string>("");
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [showFullCatalog, setShowFullCatalog] = useState(false);
   const [search, setSearch] = useState("");
@@ -153,6 +153,22 @@ function PureMultimodalInput({
       );
     });
   }, [availableChatModels]);
+
+  // On mount load from localStorage or use first available model
+  useEffect(() => {
+    const stored = localStorage.getItem("selectedModelId");
+    if (stored && availableChatModels.some((m) => m.id === stored)) {
+      setSelectedModelIdState(stored);
+    } else if (availableChatModels.length > 0) {
+      setSelectedModelIdState(availableChatModels[0].id);
+    }
+  }, [availableChatModels]);
+
+  // When user selects a model, update state and localStorage
+  const setSelectedModelId = (id: string) => {
+    setSelectedModelIdState(id);
+    localStorage.setItem("selectedModelId", id);
+  };
 
   const handlePin = async (id: string) => {
     if (favourites.length >= 10) {
@@ -380,7 +396,10 @@ function PureMultimodalInput({
                   availableChatModels.find((m) => m.id === selectedModelId)
                     ?.provider || ""
                 )}
-                <span className="ml-1">{selectedModelId}</span>
+                <span className="ml-1">
+                  {availableChatModels.find((m) => m.id === selectedModelId)
+                    ?.name || selectedModelId}
+                </span>
                 <FiChevronDown
                   className={
                     "ml-1 transition-transform duration-200" +
@@ -393,7 +412,11 @@ function PureMultimodalInput({
             <DropdownMenuContent
               side="top"
               align="start"
-              className="p-0 w-[40rem] max-w-[90vw] !overflow-visible"
+              className={
+                showFullCatalog
+                  ? "p-0 w-[40rem] max-w-[90vw] overflow-visible"
+                  : "p-0 w-96 overflow-hidden"
+              }
             >
               {!showFullCatalog ? (
                 <ModelSelectorQuickPick
