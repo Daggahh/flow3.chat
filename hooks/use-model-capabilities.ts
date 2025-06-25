@@ -15,11 +15,13 @@ export function useModelCapabilities(models: ChatModel[] = chatModels) {
     return Array.from(caps);
   }, [models]);
 
-  // Filter models by selected capability
-  const filterByCapability = (cap: Capability | null) => {
-    if (!cap) return models;
-    return models.filter((model) => model.capabilities[cap]);
+  // Filter models by ALL selected capabilities (AND logic)
+  const filterByCapabilities = (caps: Capability[] | null) => {
+    if (!caps || caps.length === 0) return models;
+    return models.filter((model) =>
+      caps.every((cap) => model.capabilities[cap])
+    );
   };
 
-  return { allCapabilities, filterByCapability };
+  return { allCapabilities, filterByCapabilities };
 } 

@@ -12,9 +12,23 @@ export interface ChatModel {
   provider: ProviderType;
   capabilities: {
     chat: boolean;
-    imageGeneration?: boolean;
-    imageUnderstanding?: boolean;
-    codeCompletion?: boolean;
+    image_generation?: boolean;
+    image_understanding?: boolean;
+    code_completion?: boolean;
+    function_calling?: boolean;
+    web_search?: boolean;
+    document_analysis?: boolean;
+    json_mode?: boolean;
+    streaming?: boolean;
+    vision?: boolean;
+    audio_input?: boolean;
+    audio_output?: boolean;
+    tool_use?: boolean;
+    reasoning?: boolean;
+    multimodal?: boolean;
+    file_upload?: boolean;
+    text_to_speech?: boolean;
+    speech_to_text?: boolean;
   };
 }
 
@@ -29,8 +43,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'openai',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -42,8 +65,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'openai',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -55,7 +87,14 @@ export const chatModels: Array<ChatModel> = [
     provider: 'openai',
     capabilities: {
       chat: true,
-      codeCompletion: true
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      tool_use: true,
+      reasoning: true,
+      file_upload: true
     }
   },
   {
@@ -67,8 +106,21 @@ export const chatModels: Array<ChatModel> = [
     provider: 'openai',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      audio_input: true,
+      audio_output: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true,
+      text_to_speech: true,
+      speech_to_text: true
     }
   },
   {
@@ -80,7 +132,14 @@ export const chatModels: Array<ChatModel> = [
     provider: 'openai',
     capabilities: {
       chat: true,
-      codeCompletion: true
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      tool_use: true,
+      reasoning: true,
+      file_upload: true
     }
   },
   {
@@ -92,7 +151,12 @@ export const chatModels: Array<ChatModel> = [
     provider: 'openai',
     capabilities: {
       chat: true,
-      codeCompletion: true
+      code_completion: true,
+      function_calling: true,
+      json_mode: true,
+      streaming: true,
+      tool_use: true,
+      file_upload: true
     }
   },
   // Anthropic Models
@@ -106,8 +170,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'anthropic',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -120,8 +193,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'anthropic',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -134,8 +216,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'anthropic',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -148,8 +239,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'anthropic',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -162,8 +262,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'anthropic',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -176,8 +285,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'anthropic',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -190,8 +308,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'anthropic',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -204,8 +331,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'anthropic',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -218,8 +354,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'anthropic',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -232,8 +377,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'anthropic',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -246,8 +400,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'anthropic',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -260,8 +423,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'anthropic',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   // Google Models (fully synchronized)
@@ -274,8 +446,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'google',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -287,8 +468,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'google',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -300,8 +490,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'google',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -313,8 +512,17 @@ export const chatModels: Array<ChatModel> = [
     provider: 'google',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -326,8 +534,21 @@ export const chatModels: Array<ChatModel> = [
     provider: 'google',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      audio_input: true,
+      audio_output: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true,
+      text_to_speech: true,
+      speech_to_text: true
     }
   },
   {
@@ -339,8 +560,21 @@ export const chatModels: Array<ChatModel> = [
     provider: 'google',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      audio_input: true,
+      audio_output: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true,
+      text_to_speech: true,
+      speech_to_text: true
     }
   },
   {
@@ -352,8 +586,21 @@ export const chatModels: Array<ChatModel> = [
     provider: 'google',
     capabilities: {
       chat: true,
-      imageUnderstanding: true,
-      codeCompletion: true
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      audio_input: true,
+      audio_output: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true,
+      text_to_speech: true,
+      speech_to_text: true
     }
   },
   // Mistral Models
@@ -366,7 +613,12 @@ export const chatModels: Array<ChatModel> = [
     provider: 'mistral',
     capabilities: {
       chat: true,
-      codeCompletion: true
+      code_completion: true,
+      function_calling: true,
+      json_mode: true,
+      streaming: true,
+      tool_use: true,
+      file_upload: true
     }
   },
   {
@@ -378,7 +630,12 @@ export const chatModels: Array<ChatModel> = [
     provider: 'mistral',
     capabilities: {
       chat: true,
-      codeCompletion: true
+      code_completion: true,
+      function_calling: true,
+      json_mode: true,
+      streaming: true,
+      tool_use: true,
+      file_upload: true
     }
   },
   {
@@ -390,7 +647,12 @@ export const chatModels: Array<ChatModel> = [
     provider: 'mistral',
     capabilities: {
       chat: true,
-      codeCompletion: true
+      code_completion: true,
+      function_calling: true,
+      json_mode: true,
+      streaming: true,
+      tool_use: true,
+      file_upload: true
     }
   },
   {
@@ -402,7 +664,9 @@ export const chatModels: Array<ChatModel> = [
     provider: 'mistral',
     capabilities: {
       chat: true,
-      codeCompletion: true
+      code_completion: true,
+      streaming: true,
+      file_upload: true
     }
   },
   {
@@ -414,7 +678,12 @@ export const chatModels: Array<ChatModel> = [
     provider: 'mistral',
     capabilities: {
       chat: true,
-      codeCompletion: true
+      code_completion: true,
+      function_calling: true,
+      json_mode: true,
+      streaming: true,
+      tool_use: true,
+      file_upload: true
     }
   },
   {
@@ -426,7 +695,13 @@ export const chatModels: Array<ChatModel> = [
     provider: 'mistral',
     capabilities: {
       chat: true,
-      codeCompletion: true
+      code_completion: true,
+      function_calling: true,
+      json_mode: true,
+      streaming: true,
+      tool_use: true,
+      reasoning: true,
+      file_upload: true
     }
   },
   // xAI Grok
@@ -439,7 +714,14 @@ export const chatModels: Array<ChatModel> = [
     provider: 'grok',
     capabilities: {
       chat: true,
-      codeCompletion: true
+      code_completion: true,
+      function_calling: true,
+      web_search: true,
+      json_mode: true,
+      streaming: true,
+      tool_use: true,
+      reasoning: true,
+      file_upload: true
     }
   },
   {
@@ -450,7 +732,10 @@ export const chatModels: Array<ChatModel> = [
     costPer1kTokens: 0.005,
     provider: 'grok',
     capabilities: {
-      chat: true
+      chat: true,
+      web_search: true,
+      streaming: true,
+      file_upload: true
     }
   },
   {
@@ -462,7 +747,12 @@ export const chatModels: Array<ChatModel> = [
     provider: 'grok',
     capabilities: {
       chat: true,
-      imageUnderstanding: true
+      image_understanding: true,
+      web_search: true,
+      streaming: true,
+      vision: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {
@@ -473,200 +763,272 @@ export const chatModels: Array<ChatModel> = [
     costPer1kTokens: 0.008,
     provider: 'grok',
     capabilities: {
-      chat: true
+      chat: true,
+      web_search: true,
+      streaming: true,
+      file_upload: true
     }
   },
   // Cohere
   {
     id: 'command-r-plus',
     name: 'Cohere Command R+',
-    description: 'Cohere’s most advanced model for reasoning and chat.',
+    description: 'Cohere\'s most advanced model for reasoning and chat.',
     maxTokens: 4096,
     provider: 'cohere',
     contextWindow: 128000,
     costPer1kTokens: 0.01,
     capabilities: {
       chat: true,
-      codeCompletion: true
+      code_completion: true,
+      function_calling: true,
+      web_search: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      tool_use: true,
+      reasoning: true,
+      file_upload: true
     }
   },
   {
     id: 'command-r',
     name: 'Cohere Command R',
-    description: 'Cohere’s fast, general-purpose model.',
+    description: 'Cohere\'s fast, general-purpose model.',
     maxTokens: 4096,
     provider: 'cohere',
     contextWindow: 128000,
     costPer1kTokens: 0.005,
     capabilities: {
-      chat: true
+      chat: true,
+      web_search: true,
+      document_analysis: true,
+      streaming: true,
+      file_upload: true
     }
   },
   {
     id: 'command',
     name: 'Cohere Command',
-    description: 'Cohere’s base model for general tasks.',
+    description: 'Cohere\'s base model for general tasks.',
     maxTokens: 4096,
     provider: 'cohere',
     contextWindow: 128000,
     costPer1kTokens: 0.004,
     capabilities: {
-      chat: true
+      chat: true,
+      streaming: true,
+      file_upload: true
     }
   },
   {
     id: 'command-nightly',
     name: 'Cohere Command Nightly',
-    description: 'Cohere’s nightly build for latest features.',
+    description: 'Cohere\'s nightly build for latest features.',
     maxTokens: 4096,
     provider: 'cohere',
     contextWindow: 128000,
     costPer1kTokens: 0.003,
     capabilities: {
-      chat: true
+      chat: true,
+      streaming: true,
+      file_upload: true
     }
   },
   {
     id: 'command-light',
     name: 'Cohere Command Light',
-    description: 'Cohere’s lightweight model for fast inference.',
+    description: 'Cohere\'s lightweight model for fast inference.',
     maxTokens: 4096,
     provider: 'cohere',
     contextWindow: 128000,
     costPer1kTokens: 0.002,
     capabilities: {
-      chat: true
+      chat: true,
+      streaming: true,
+      file_upload: true
     }
   },
   {
     id: 'command-light-nightly',
     name: 'Cohere Command Light Nightly',
-    description: 'Cohere’s lightweight nightly build.',
+    description: 'Cohere\'s lightweight nightly build.',
     maxTokens: 4096,
     provider: 'cohere',
     contextWindow: 128000,
     costPer1kTokens: 0.001,
     capabilities: {
-      chat: true
+      chat: true,
+      streaming: true,
+      file_upload: true
     }
   },
   // DeepSeek
   {
     id: 'deepseek-chat',
     name: 'DeepSeek Chat',
-    description: 'DeepSeek’s chat-optimized model.',
+    description: 'DeepSeek\'s chat-optimized model.',
     maxTokens: 4096,
     provider: 'deepseek',
     contextWindow: 128000,
     costPer1kTokens: 0.005,
     capabilities: {
-      chat: true
+      chat: true,
+      streaming: true,
+      file_upload: true
     }
   },
   {
     id: 'deepseek-coder',
     name: 'DeepSeek Coder',
-    description: 'DeepSeek’s code generation model.',
+    description: 'DeepSeek\'s code generation model.',
     maxTokens: 4096,
     provider: 'deepseek',
     contextWindow: 128000,
     costPer1kTokens: 0.01,
     capabilities: {
       chat: true,
-      codeCompletion: true
+      code_completion: true,
+      function_calling: true,
+      json_mode: true,
+      streaming: true,
+      tool_use: true,
+      file_upload: true
     }
   },
   {
     id: 'deepseek-reasoner',
     name: 'DeepSeek Reasoner',
-    description: 'DeepSeek’s advanced reasoning model.',
+    description: 'DeepSeek\'s advanced reasoning model.',
     maxTokens: 4096,
     provider: 'deepseek',
     contextWindow: 128000,
     costPer1kTokens: 0.012,
     capabilities: {
-      chat: true
+      chat: true,
+      reasoning: true,
+      streaming: true,
+      file_upload: true
     }
   },
   // Perplexity
   {
     id: 'pplx-70b-chat',
     name: 'Perplexity 70B Chat',
-    description: 'Perplexity’s 70B parameter chat model.',
+    description: 'Perplexity\'s 70B parameter chat model.',
     contextWindow: 128000,
     costPer1kTokens: 0.01,
     provider: 'perplexity',
     capabilities: {
-      chat: true
+      chat: true,
+      web_search: true,
+      streaming: true,
+      file_upload: true
     }
   },
   {
     id: 'pplx-7b-chat',
     name: 'Perplexity 7B Chat',
-    description: 'Perplexity’s 7B parameter chat model.',
+    description: 'Perplexity\'s 7B parameter chat model.',
     contextWindow: 128000,
     costPer1kTokens: 0.005,
     provider: 'perplexity',
     capabilities: {
-      chat: true
+      chat: true,
+      web_search: true,
+      streaming: true,
+      file_upload: true
     }
   },
-  {
+   {
     id: 'sonar',
     name: 'Perplexity Sonar',
-    description: 'Perplexity Sonar, general-purpose model.',
+    description: 'Perplexity Sonar, general-purpose model with web search capabilities.',
     contextWindow: 128000,
     costPer1kTokens: 0.01,
     provider: 'perplexity',
     capabilities: {
-      chat: true
+      chat: true,
+      web_search: true,
+      streaming: true,
+      json_mode: true,
+      document_analysis: true,
+      reasoning: true
     }
   },
   {
     id: 'sonar-pro',
     name: 'Perplexity Sonar Pro',
-    description: 'Perplexity Sonar Pro, advanced model.',
+    description: 'Perplexity Sonar Pro, advanced model with enhanced search and citations.',
     contextWindow: 128000,
     costPer1kTokens: 0.02,
     provider: 'perplexity',
     capabilities: {
-      chat: true
+      chat: true,
+      web_search: true,
+      streaming: true,
+      json_mode: true,
+      document_analysis: true,
+      reasoning: true,
+      function_calling: true
     }
   },
   {
     id: 'sonar-reasoning',
     name: 'Perplexity Sonar Reasoning',
-    description: 'Perplexity Sonar Reasoning, optimized for reasoning tasks.',
+    description: 'Perplexity Sonar Reasoning, optimized for complex reasoning tasks.',
     contextWindow: 128000,
     costPer1kTokens: 0.015,
     provider: 'perplexity',
     capabilities: {
-      chat: true
+      chat: true,
+      web_search: true,
+      streaming: true,
+      json_mode: true,
+      document_analysis: true,
+      reasoning: true,
+      function_calling: true
     }
   },
   {
     id: 'sonar-reasoning-pro',
     name: 'Perplexity Sonar Reasoning Pro',
-    description: 'Perplexity Sonar Reasoning Pro, advanced reasoning model.',
+    description: 'Perplexity Sonar Reasoning Pro, advanced reasoning model with superior planning.',
     contextWindow: 128000,
     costPer1kTokens: 0.025,
     provider: 'perplexity',
     capabilities: {
-      chat: true
+      chat: true,
+      web_search: true,
+      streaming: true,
+      json_mode: true,
+      document_analysis: true,
+      reasoning: true,
+      function_calling: true,
+      tool_use: true
     }
   },
   {
     id: 'sonar-deep-research',
     name: 'Perplexity Sonar Deep Research',
-    description: 'Perplexity Sonar Deep Research, for deep research tasks.',
+    description: 'Perplexity Sonar Deep Research, specialized for comprehensive research tasks.',
     contextWindow: 128000,
     costPer1kTokens: 0.03,
     provider: 'perplexity',
     capabilities: {
-      chat: true
+      chat: true,
+      web_search: true,
+      streaming: true,
+      json_mode: true,
+      document_analysis: true,
+      reasoning: true,
+      function_calling: true,
+      tool_use: true,
+      file_upload: true
     }
   },
-  // OpenRouter Main Models
+
+  // OpenRouter Models
   {
     id: 'openai/gpt-3.5-turbo',
     name: 'OpenAI GPT-3.5 Turbo (OpenRouter)',
@@ -674,52 +1036,103 @@ export const chatModels: Array<ChatModel> = [
     contextWindow: 16384,
     costPer1kTokens: 0.5,
     provider: 'openrouter',
-    capabilities: { chat: true, codeCompletion: true }
+    capabilities: {
+      chat: true,
+      code_completion: true,
+      function_calling: true,
+      streaming: true,
+      json_mode: true,
+      tool_use: true
+    }
   },
   {
     id: 'anthropic/claude-3-haiku',
     name: 'Anthropic Claude 3 Haiku (OpenRouter)',
-    description: 'Anthropic\'s fast, affordable model via OpenRouter',
+    description: 'Anthropic\'s fast, affordable model via OpenRouter with vision capabilities',
     contextWindow: 200000,
     costPer1kTokens: 0.25,
     provider: 'openrouter',
-    capabilities: { chat: true }
+    capabilities: {
+      chat: true,
+      vision: true,
+      image_understanding: true,
+      document_analysis: true,
+      streaming: true,
+      json_mode: true,
+      multimodal: true,
+      file_upload: true,
+      tool_use: true,
+      function_calling: true
+    }
   },
   {
     id: 'google/gemini-pro',
     name: 'Google Gemini Pro (OpenRouter)',
-    description: 'Google\'s main chat model via OpenRouter',
+    description: 'Google\'s multimodal chat model via OpenRouter with vision and code capabilities',
     contextWindow: 32768,
     costPer1kTokens: 0.25,
     provider: 'openrouter',
-    capabilities: { chat: true }
+    capabilities: {
+      chat: true,
+      vision: true,
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      streaming: true,
+      json_mode: true,
+      multimodal: true,
+      document_analysis: true,
+      file_upload: true,
+      tool_use: true
+    }
   },
   {
     id: 'mistralai/mistral-large',
     name: 'Mistral Large (OpenRouter)',
-    description: 'Mistral\'s flagship model via OpenRouter',
+    description: 'Mistral\'s flagship model via OpenRouter with advanced coding capabilities',
     contextWindow: 32000,
     costPer1kTokens: 0.7,
     provider: 'openrouter',
-    capabilities: { chat: true, codeCompletion: true }
+    capabilities: {
+      chat: true,
+      code_completion: true,
+      function_calling: true,
+      streaming: true,
+      json_mode: true,
+      tool_use: true,
+      reasoning: true
+    }
   },
   {
     id: 'cohere/command-r',
     name: 'Cohere Command R (OpenRouter)',
-    description: 'Cohere\'s main chat model via OpenRouter',
+    description: 'Cohere\'s main chat model via OpenRouter with tool use capabilities',
     contextWindow: 128000,
     costPer1kTokens: 0.2,
     provider: 'openrouter',
-    capabilities: { chat: true }
+    capabilities: {
+      chat: true,
+      function_calling: true,
+      tool_use: true,
+      streaming: true,
+      json_mode: true,
+      document_analysis: true
+    }
   },
   {
     id: 'perplexity/sonar-medium-online',
     name: 'Perplexity Sonar Medium (OpenRouter)',
-    description: 'Perplexity\'s main model via OpenRouter',
+    description: 'Perplexity\'s web-search enabled model via OpenRouter',
     contextWindow: 32768,
     costPer1kTokens: 0.2,
     provider: 'openrouter',
-    capabilities: { chat: true }
+    capabilities: {
+      chat: true,
+      web_search: true,
+      streaming: true,
+      document_analysis: true,
+      reasoning: true
+    }
   },
   // ElevenLabs (removed)
 ];

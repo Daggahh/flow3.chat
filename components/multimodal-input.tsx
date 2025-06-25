@@ -132,7 +132,7 @@ function PureMultimodalInput({
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [showFullCatalog, setShowFullCatalog] = useState(false);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<string | null>(null);
+  const [filterList, setFilterList] = useState<string[]>([]);
   const [favourites, setFavourites] = useState<ChatModel[]>([]);
 
   // Get available models for the user
@@ -429,8 +429,8 @@ function PureMultimodalInput({
                   onShowAll={() => setShowFullCatalog(true)}
                   search={search}
                   setSearch={setSearch}
-                  filter={filter}
-                  setFilter={setFilter}
+                  filterList={filterList}
+                  setFilterList={setFilterList}
                   onPin={handlePin}
                   onUnpin={handleUnpin}
                   selectedModelId={selectedModelId}
@@ -447,8 +447,8 @@ function PureMultimodalInput({
                   onBack={() => setShowFullCatalog(false)}
                   search={search}
                   setSearch={setSearch}
-                  filter={filter}
-                  setFilter={setFilter}
+                  filterList={filterList}
+                  setFilterList={setFilterList}
                   onPin={handlePin}
                   onUnpin={handleUnpin}
                   selectedModelId={selectedModelId}
