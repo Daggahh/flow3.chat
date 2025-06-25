@@ -114,7 +114,7 @@ export function ModelSelectorQuickPick({
           )}
         </div>
       </div>
-      <div className="overflow-y-auto flex-1 px-1.5 py-1 custom-scrollbar">
+      <div className="overflow-y-auto flex-1 px-1.5 py-1 custom-scrollbar max-h-64">
         {filtered.length === 0 && (
           <div className="text-xs text-muted-foreground p-4 text-center">
             No favourites found.

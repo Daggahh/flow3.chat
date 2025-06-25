@@ -1632,7 +1632,7 @@ export const OpenRouter = ({
       stroke="currentColor"
       aria-label="Logo"
     >
-      <g clip-path="url(#clip0_205_3)" stroke="#A1A1AA" fill="#A1A1AA">
+      <g clipPath="url(#clip0_205_3)" stroke="#A1A1AA" fill="#A1A1AA">
         <path
           d="M3 248.945C18 248.945 76 236 106 219C136 202 136 202 198 158C276.497 102.293 332 120.945 423 120.945"
           strokeWidth="90px"

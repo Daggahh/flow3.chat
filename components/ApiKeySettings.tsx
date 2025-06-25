@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Dialog, DialogContent } from "./ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
 import { useProviderIcon } from "@/hooks/use-provider-icon";
 import { ChevronLeft } from "lucide-react";
 import { useApiKeys } from "@/hooks/use-api-keys";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 const PROVIDERS = [
   { id: "openai", name: "OpenAI" },
@@ -73,10 +74,10 @@ export function ApiKeySettings({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        className="max-w-4xl w-full p-0 bg-white dark:bg-zinc-900 rounded-xl shadow-xl flex flex-col md:flex-row overflow-y-auto max-h-[90vh] animate-in fade-in zoom-in"
-        // On mobile, the whole modal is scrollable
-      >
+      <DialogContent className="max-w-4xl w-full p-0 bg-white dark:bg-zinc-900 rounded-xl shadow-xl flex flex-col md:flex-row overflow-y-auto max-h-[90vh] animate-in fade-in zoom-in">
+        <DialogTitle asChild>
+          <VisuallyHidden>API Key Settings</VisuallyHidden>
+        </DialogTitle>
         {/* Sidebar */}
         <aside className="w-full md:w-72 bg-muted/40 dark:bg-zinc-800/40 border-r border-border/50 flex flex-col items-center py-8 px-6 gap-6 shrink-0">
           <div className="flex flex-col items-center gap-2">

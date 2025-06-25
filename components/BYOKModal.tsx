@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { Dialog, DialogContent } from "./ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useProviderIcon } from "@/hooks/use-provider-icon";
 import { useApiKeys } from "@/hooks/use-api-keys";
 import { InfoIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 const PROVIDERS = [
   {
@@ -109,6 +110,9 @@ export function BYOKModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl w-full p-0 bg-white dark:bg-zinc-900 rounded-xl shadow-xl flex flex-col md:flex-row overflow-visible animate-in fade-in zoom-in">
+        <DialogTitle asChild>
+          <VisuallyHidden>Add or Update API Key</VisuallyHidden>
+        </DialogTitle>
         {/* Provider Tab List */}
         <nav
           className="md:w-56 w-full md:h-[500px] h-16 flex-row flex md:flex-col flex-nowrap md:overflow-y-auto overflow-x-auto border-r border-border/50 bg-muted/40 dark:bg-zinc-800/40 shrink-0"
@@ -144,25 +148,25 @@ export function BYOKModal({
                 {provider?.name} API Key
               </label>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              {provider?.helpLink && (
-                <a
-                  href={provider.helpLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:underline ml-2"
-                >
-                  Get API key
-                </a>
-              )}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex items-center cursor-pointer">
-                    <InfoIcon className="w-4 h-4 mr-1" />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{provider?.helpText}</TooltipContent>
-              </Tooltip>
-            </div>
+                {provider?.helpLink && (
+                  <a
+                    href={provider.helpLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-600 hover:underline ml-2"
+                  >
+                    Get API key
+                  </a>
+                )}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center cursor-pointer">
+                      <InfoIcon className="w-4 h-4 mr-1" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{provider?.helpText}</TooltipContent>
+                </Tooltip>
+              </div>
             </div>
             <Input
               id="api-key-input"

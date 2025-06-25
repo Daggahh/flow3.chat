@@ -22,12 +22,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { SuggestedActions } from "@/components/suggested-actions";
 import equal from "fast-deep-equal";
 import type { UseChatHelpers } from "@ai-sdk/react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowDown } from "lucide-react";
-import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import type { VisibilityType } from "./visibility-selector";
 import { Search as SearchIcon, GlobeIcon } from "lucide-react";
 import { useProviderIcon } from "@/hooks/use-provider-icon";
@@ -109,7 +107,9 @@ function PureMultimodalInput({
       const domValue = textareaRef.current.value;
       // Prefer DOM value over localStorage to handle hydration
       const finalValue = domValue || localStorageInput || "";
-      setInput(finalValue);
+      if (finalValue !== input) {
+        setInput(finalValue);
+      }
       adjustHeight();
     }
     // Only run once after hydration
@@ -121,7 +121,9 @@ function PureMultimodalInput({
   }, [input, setLocalStorageInput]);
 
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(event.target.value);
+    if (event.target.value !== input) {
+      setInput(event.target.value);
+    }
     adjustHeight();
   };
 
@@ -269,14 +271,6 @@ function PureMultimodalInput({
     [setAttachments]
   );
 
-  const { isAtBottom, scrollToBottom } = useScrollToBottom();
-
-  useEffect(() => {
-    if (status === "submitted") {
-      scrollToBottom();
-    }
-  }, [status, scrollToBottom]);
-
   const handleWebSearch = async () => {
     if (!input.trim()) return;
     setUseWebSearch((prev) => !prev);
@@ -284,41 +278,6 @@ function PureMultimodalInput({
 
   return (
     <div className="relative w-full flex flex-col gap-4">
-      <AnimatePresence>
-        {!isAtBottom && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="absolute left-1/2 bottom-28 -translate-x-1/2 z-50"
-          >
-            <Button
-              data-testid="scroll-to-bottom-button"
-              className="rounded-full"
-              size="icon"
-              variant="outline"
-              onClick={(event) => {
-                event.preventDefault();
-                scrollToBottom();
-              }}
-            >
-              <ArrowDown />
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {messages.length === 0 &&
-        attachments.length === 0 &&
-        uploadQueue.length === 0 && (
-          <SuggestedActions
-            append={append}
-            chatId={chatId}
-            selectedVisibilityType={selectedVisibilityType}
-          />
-        )}
-
       <input
         type="file"
         className="fixed -top-4 -left-4 size-0.5 opacity-0 pointer-events-none"
@@ -351,141 +310,146 @@ function PureMultimodalInput({
         </div>
       )}
 
-      <Textarea
-        data-testid="multimodal-input"
-        ref={textareaRef}
-        placeholder="Send a message..."
-        value={input}
-        onChange={handleInput}
-        className={cx(
-          "min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted pb-10 dark:border-zinc-700",
-          className
-        )}
-        rows={2}
-        autoFocus
-        onKeyDown={(event) => {
-          if (
-            event.key === "Enter" &&
-            !event.shiftKey &&
-            !event.nativeEvent.isComposing
-          ) {
-            event.preventDefault();
-
-            if (status !== "ready") {
-              toast.error("Please wait for the model to finish its response!");
-            } else {
-              submitForm();
-            }
-          }
-        }}
-      />
-
-      <div className="absolute bottom-0 p-2 w-fit flex flex-row justify-start">
-        <div className="relative">
-          <DropdownMenu
-            open={showModelSelector}
-            onOpenChange={setShowModelSelector}
-          >
-            <DropdownMenuTrigger asChild>
-              <Button
-                data-testid="model-selector-inline"
-                className="rounded-md p-[7px] h-fit mr-2 flex items-center gap-2"
-                variant="outline"
-              >
-                {useProviderIcon(
-                  availableChatModels.find((m) => m.id === selectedModelId)
-                    ?.provider || ""
-                )}
-                <span className="ml-1">
-                  {availableChatModels.find((m) => m.id === selectedModelId)
-                    ?.name || selectedModelId}
-                </span>
-                <FiChevronDown
-                  className={
-                    "ml-1 transition-transform duration-200" +
-                    (showModelSelector ? " rotate-180" : "")
-                  }
-                  size={18}
-                />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              side="top"
-              align="start"
-              className={
-                showFullCatalog
-                  ? "p-0 w-[40rem] max-w-[90vw] overflow-visible"
-                  : "p-0 w-96 overflow-hidden"
-              }
-            >
-              {!showFullCatalog ? (
-                <ModelSelectorQuickPick
-                  availableModels={availableChatModels}
-                  favourites={favourites}
-                  onSelect={(id) => {
-                    setSelectedModelId(id);
-                    setShowModelSelector(false);
-                  }}
-                  onShowAll={() => setShowFullCatalog(true)}
-                  search={search}
-                  setSearch={setSearch}
-                  filterList={filterList}
-                  setFilterList={setFilterList}
-                  onPin={handlePin}
-                  onUnpin={handleUnpin}
-                  selectedModelId={selectedModelId}
-                />
-              ) : (
-                <ModelSelectorFullCatalog
-                  availableModels={availableChatModels}
-                  favourites={favourites}
-                  onSelect={(id) => {
-                    setSelectedModelId(id);
-                    setShowFullCatalog(false);
-                    setShowModelSelector(false);
-                  }}
-                  onBack={() => setShowFullCatalog(false)}
-                  search={search}
-                  setSearch={setSearch}
-                  filterList={filterList}
-                  setFilterList={setFilterList}
-                  onPin={handlePin}
-                  onUnpin={handleUnpin}
-                  selectedModelId={selectedModelId}
-                />
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        <Button
-          data-testid="web-search-button"
+      <div
+        className="flex flex-col w-full bg-muted rounded-2xl p-2 pb-2"
+        style={{ minHeight: "96px", maxHeight: "22rem" }}
+      >
+        <Textarea
+          data-testid="multimodal-input"
+          ref={textareaRef}
+          placeholder="Send a message..."
+          value={input}
+          onChange={handleInput}
           className={cx(
-            "rounded-md p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200 mr-2 flex items-center gap-1",
-            useWebSearch ? "bg-blue-100 dark:bg-blue-900 text-blue-700" : ""
+            "min-h-[48px] max-h-72 overflow-auto resize-none rounded-xl !text-base bg-muted dark:border-zinc-700 custom-scrollbar",
+            className
           )}
-          onClick={(e) => {
-            e.preventDefault();
-            handleWebSearch();
-          }}
-          disabled={!input.trim()}
-          variant="ghost"
-        >
-          <GlobeIcon size={14} />
-          <span className="ml-1 hidden md:inline">Web Search</span>
-        </Button>
-        <AttachmentsButton fileInputRef={fileInputRef} status={status} />
-      </div>
+          rows={3}
+          autoFocus
+          onKeyDown={(event) => {
+            if (
+              event.key === "Enter" &&
+              !event.shiftKey &&
+              !event.nativeEvent.isComposing
+            ) {
+              event.preventDefault();
 
-      <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
-        {status === "submitted" ? (
-          <StopButton stop={stop} setMessages={setMessages} />
-        ) : (
-          <SendButton
-            input={input}
-            submitForm={submitForm}
-            uploadQueue={uploadQueue}
-          />
-        )}
+              if (status !== "ready") {
+                toast.error(
+                  "Please wait for the model to finish its response!"
+                );
+              } else {
+                submitForm();
+              }
+            }
+          }}
+        />
+        <div className="flex flex-row justify-between items-end mt-2">
+          <div className="flex flex-row gap-2">
+            <DropdownMenu
+              open={showModelSelector}
+              onOpenChange={setShowModelSelector}
+            >
+              <DropdownMenuTrigger asChild>
+                <Button
+                  data-testid="model-selector-inline"
+                  className="rounded-md p-[7px] h-fit flex items-center gap-2"
+                  variant="outline"
+                >
+                  {useProviderIcon(
+                    availableChatModels.find((m) => m.id === selectedModelId)
+                      ?.provider || ""
+                  )}
+                  <span className="ml-1">
+                    {availableChatModels.find((m) => m.id === selectedModelId)
+                      ?.name || selectedModelId}
+                  </span>
+                  <FiChevronDown
+                    className={
+                      "ml-1 transition-transform duration-200" +
+                      (showModelSelector ? " rotate-180" : "")
+                    }
+                    size={18}
+                  />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                side="top"
+                align="start"
+                className={
+                  showFullCatalog
+                    ? "p-0 w-[40rem] max-w-[90vw] overflow-visible"
+                    : "p-0 w-96 overflow-hidden"
+                }
+              >
+                {!showFullCatalog ? (
+                  <ModelSelectorQuickPick
+                    availableModels={availableChatModels}
+                    favourites={favourites}
+                    onSelect={(id) => {
+                      setSelectedModelId(id);
+                      setShowModelSelector(false);
+                    }}
+                    onShowAll={() => setShowFullCatalog(true)}
+                    search={search}
+                    setSearch={setSearch}
+                    filterList={filterList}
+                    setFilterList={setFilterList}
+                    onPin={handlePin}
+                    onUnpin={handleUnpin}
+                    selectedModelId={selectedModelId}
+                  />
+                ) : (
+                  <ModelSelectorFullCatalog
+                    availableModels={availableChatModels}
+                    favourites={favourites}
+                    onSelect={(id) => {
+                      setSelectedModelId(id);
+                      setShowFullCatalog(false);
+                      setShowModelSelector(false);
+                    }}
+                    onBack={() => setShowFullCatalog(false)}
+                    search={search}
+                    setSearch={setSearch}
+                    filterList={filterList}
+                    setFilterList={setFilterList}
+                    onPin={handlePin}
+                    onUnpin={handleUnpin}
+                    selectedModelId={selectedModelId}
+                  />
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              data-testid="web-search-button"
+              className={cx(
+                "rounded-md p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200 flex items-center gap-1",
+                useWebSearch ? "bg-blue-100 dark:bg-blue-900 text-blue-700" : ""
+              )}
+              onClick={(e) => {
+                e.preventDefault();
+                handleWebSearch();
+              }}
+              disabled={!input.trim()}
+              variant="ghost"
+            >
+              <GlobeIcon size={14} />
+              <span className="ml-1 hidden md:inline">Web Search</span>
+            </Button>
+            <AttachmentsButton fileInputRef={fileInputRef} status={status} />
+          </div>
+          <div>
+            {status === "submitted" ? (
+              <StopButton stop={stop} setMessages={setMessages} />
+            ) : (
+              <SendButton
+                input={input}
+                submitForm={submitForm}
+                uploadQueue={uploadQueue}
+              />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

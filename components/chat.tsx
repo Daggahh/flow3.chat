@@ -142,9 +142,11 @@ export function Chat({
           reload={reload}
           isReadonly={isReadonly}
           isArtifactVisible={isArtifactVisible}
+          append={append}
+          selectedVisibilityType={visibilityType}
         />
 
-        <form className="flex mx-auto px-4 bg-background pb-3 md:pb-2 gap-2 w-full md:max-w-3xl">
+        <form className="flex mx-auto px-4 bg-transparent pb-3 md:pb-2 gap-2 w-full md:max-w-3xl">
           {!isReadonly && (
             <MultimodalInput
               chatId={id}

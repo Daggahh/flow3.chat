@@ -1,5 +1,6 @@
 DO $$ BEGIN
-    CREATE TYPE "api_key_provider" AS ENUM ('openai', 'anthropic', 'google', 'mistral');
+    CREATE TYPE "api_key_provider" AS ENUM ('openai', 'anthropic', 'google', 'mistral', 'openrouter', 'grok', 'cohere', 'deepseek', 'perplexity'
+);
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
