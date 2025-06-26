@@ -8,6 +8,7 @@ import { useApiKeys } from "@/hooks/use-api-keys";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import type { ApiKeyProvider } from "@/lib/db/schema";
 
 const PROVIDERS = [
   { id: "openai", name: "OpenAI" },
@@ -28,16 +29,36 @@ export function ApiKeySettings({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const { apiKeys, loading, saveApiKey, deleteApiKey } = useApiKeys();
+  const {
+    apiKeys,
+    loading,
+    saveApiKey,
+    deleteApiKey,
+    editing,
+    handleEdit,
+    handleCancelEdit,
+  } = useApiKeys();
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const { data: session } = useSession();
 
   useEffect(() => {
-    if (isOpen) setInputs({});
-  }, [isOpen]);
+    if (isOpen) {
+      // Prefill inputs with a masked value if a key is set
+      const newInputs: Record<string, string> = {};
+      PROVIDERS.forEach((provider) => {
+        if (apiKeys.has(provider.id as any)) {
+          newInputs[provider.id] = "••••••••";
+        } else {
+          newInputs[provider.id] = "";
+        }
+      });
+      setInputs(newInputs);
+    }
+  }, [isOpen, apiKeys]);
 
   const handleInputChange = (provider: string, value: string) => {
+    // If the user starts typing, replace the masked value
     setInputs((prev) => ({ ...prev, [provider]: value }));
   };
 
@@ -161,27 +182,58 @@ export function ApiKeySettings({
                       handleInputChange(provider.id, e.target.value)
                     }
                     className="flex-1"
-                    disabled={saving[provider.id] || loading}
-                  />
-                  <Button
-                    size="sm"
-                    onClick={() => handleSave(provider.id)}
                     disabled={
-                      !inputs[provider.id] || saving[provider.id] || loading
+                      (!editing[provider.id as ApiKeyProvider] &&
+                        apiKeys.has(provider.id as any)) ||
+                      saving[provider.id] ||
+                      loading
                     }
-                    className="transition-transform group-hover:scale-105 focus:scale-105"
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDelete(provider.id)}
-                    disabled={!isSet || saving[provider.id] || loading}
-                    className="transition-transform group-hover:scale-105 focus:scale-105"
-                  >
-                    Delete
-                  </Button>
+                  />
+                  {apiKeys.has(provider.id as any) &&
+                  !editing[provider.id as ApiKeyProvider] ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(provider.id as ApiKeyProvider)}
+                      className="transition-transform group-hover:scale-105 focus:scale-105"
+                    >
+                      Edit
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => handleSave(provider.id)}
+                      disabled={
+                        !inputs[provider.id] || saving[provider.id] || loading
+                      }
+                      className="transition-transform group-hover:scale-105 focus:scale-105"
+                    >
+                      Save
+                    </Button>
+                  )}
+                  {apiKeys.has(provider.id as any) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDelete(provider.id)}
+                      disabled={saving[provider.id] || loading}
+                      className="transition-transform group-hover:scale-105 focus:scale-105"
+                    >
+                      Delete
+                    </Button>
+                  )}
+                  {editing[provider.id as ApiKeyProvider] && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        handleCancelEdit(provider.id as ApiKeyProvider)
+                      }
+                      className="ml-2"
+                    >
+                      Cancel
+                    </Button>
+                  )}
                   <span className="ml-2 text-xs text-muted-foreground">
                     {isSet ? "Set" : "Not set"}
                   </span>

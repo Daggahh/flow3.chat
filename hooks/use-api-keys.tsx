@@ -1,13 +1,19 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { toast } from "sonner";
 import { db } from "@/lib/db/local";
 import { encryptApiKey, decryptApiKey } from "@/lib/encryption";
 import { apiKeyProviderEnum } from "@/lib/db/schema";
 import { useSession } from "next-auth/react";
 
-export type ApiKeyProvider = typeof apiKeyProviderEnum.enumValues[number];
+export type ApiKeyProvider = (typeof apiKeyProviderEnum.enumValues)[number];
 
 interface ApiKeyContextType {
   apiKeys: Map<ApiKeyProvider, string>;
@@ -16,15 +22,37 @@ interface ApiKeyContextType {
   saveApiKey: (provider: ApiKeyProvider, key: string) => Promise<void>;
   deleteApiKey: (provider: ApiKeyProvider) => Promise<void>;
   refreshApiKeys: () => Promise<void>;
+  editing: Record<ApiKeyProvider, boolean>;
+  handleEdit: (provider: ApiKeyProvider) => void;
+  handleCancelEdit: (provider: ApiKeyProvider) => void;
 }
 
 const ApiKeyContext = createContext<ApiKeyContextType | undefined>(undefined);
 
 export function ApiKeyProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
-  const [apiKeys, setApiKeys] = useState<Map<ApiKeyProvider, string>>(new Map());
+  const [apiKeys, setApiKeys] = useState<Map<ApiKeyProvider, string>>(
+    new Map()
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const allProviders: ApiKeyProvider[] = [
+    "openai",
+    "anthropic",
+    "google",
+    "mistral",
+    "openrouter",
+    "grok",
+    "cohere",
+    "deepseek",
+    "perplexity",
+  ];
+  const [editing, setEditing] = useState<Record<ApiKeyProvider, boolean>>(
+    Object.fromEntries(allProviders.map((p) => [p, false])) as Record<
+      ApiKeyProvider,
+      boolean
+    >
+  );
 
   const refreshApiKeys = useCallback(async () => {
     try {
@@ -67,72 +95,96 @@ export function ApiKeyProvider({ children }: { children: React.ReactNode }) {
     // return () => window.removeEventListener('storage', refreshApiKeys);
   }, [refreshApiKeys]);
 
-  const saveApiKey = useCallback(async (provider: ApiKeyProvider, key: string) => {
-    try {
-      setLoading(true);
-      const encryptedKey = await encryptApiKey(key);
-      const id = crypto.randomUUID();
-      // Save to IndexedDB
-      await db.api_keys.put({
-        id,
-        provider,
-        encryptedKey,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        synced: false,
-      });
-      // If authenticated, save to server
-      if (session?.user) {
-        const response = await fetch("/api/keys", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ provider, apiKey: key }),
+  const saveApiKey = useCallback(
+    async (provider: ApiKeyProvider, key: string) => {
+      try {
+        setLoading(true);
+        const encryptedKey = await encryptApiKey(key);
+        const id = crypto.randomUUID();
+        // Save to IndexedDB
+        await db.api_keys.put({
+          id,
+          provider,
+          encryptedKey,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          synced: false,
         });
-        if (!response.ok) {
-          throw new Error("Failed to save API key to server");
+        // If authenticated, save to server
+        if (session?.user) {
+          const response = await fetch("/api/keys", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ provider, apiKey: key }),
+          });
+          if (!response.ok) {
+            throw new Error("Failed to save API key to server");
+          }
+          // Mark as synced in IndexedDB
+          await db.api_keys.update(id, { synced: true });
         }
-        // Mark as synced in IndexedDB
-        await db.api_keys.update(id, { synced: true });
+        await refreshApiKeys();
+        toast.success(`Successfully saved ${provider} API key`);
+      } catch (err) {
+        toast.error("Failed to save API key");
+        setError(err as Error);
+        throw err;
+      } finally {
+        setLoading(false);
       }
-      await refreshApiKeys();
-      toast.success(`Successfully saved ${provider} API key`);
-    } catch (err) {
-      toast.error("Failed to save API key");
-      setError(err as Error);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [session?.user, refreshApiKeys]);
+    },
+    [session?.user, refreshApiKeys]
+  );
 
-  const deleteApiKey = useCallback(async (provider: ApiKeyProvider) => {
-    try {
-      setLoading(true);
-      // Delete from IndexedDB
-      await db.api_keys.where("provider").equals(provider).delete();
-      // If authenticated, delete from server
-      if (session?.user) {
-        const response = await fetch(`/api/keys?provider=${provider}`, {
-          method: "DELETE",
-        });
-        if (!response.ok) {
-          throw new Error("Failed to delete API key from server");
+  const deleteApiKey = useCallback(
+    async (provider: ApiKeyProvider) => {
+      try {
+        setLoading(true);
+        // Delete from IndexedDB
+        await db.api_keys.where("provider").equals(provider).delete();
+        // If authenticated, delete from server
+        if (session?.user) {
+          const response = await fetch(`/api/keys?provider=${provider}`, {
+            method: "DELETE",
+          });
+          if (!response.ok) {
+            throw new Error("Failed to delete API key from server");
+          }
         }
+        await refreshApiKeys();
+        toast.success(`Successfully removed ${provider} API key`);
+      } catch (err) {
+        toast.error("Failed to delete API key");
+        setError(err as Error);
+        throw err;
+      } finally {
+        setLoading(false);
       }
-      await refreshApiKeys();
-      toast.success(`Successfully removed ${provider} API key`);
-    } catch (err) {
-      toast.error("Failed to delete API key");
-      setError(err as Error);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [session?.user, refreshApiKeys]);
+    },
+    [session?.user, refreshApiKeys]
+  );
+
+  const handleEdit = useCallback((provider: ApiKeyProvider) => {
+    setEditing((prev) => ({ ...prev, [provider]: true }));
+  }, []);
+
+  const handleCancelEdit = useCallback((provider: ApiKeyProvider) => {
+    setEditing((prev) => ({ ...prev, [provider]: false }));
+  }, []);
 
   return (
     <ApiKeyContext.Provider
-      value={{ apiKeys, loading, error, saveApiKey, deleteApiKey, refreshApiKeys }}
+      value={{
+        apiKeys,
+        loading,
+        error,
+        saveApiKey,
+        deleteApiKey,
+        refreshApiKeys,
+        editing,
+        handleEdit,
+        handleCancelEdit,
+      }}
     >
       {children}
     </ApiKeyContext.Provider>

@@ -1,7 +1,23 @@
 import { auth } from '@/app/(auth)/auth';
 import { ChatSDKError } from '@/lib/errors';
-import { saveApiKey, deleteApiKey } from '@/lib/db/queries';
+import { saveApiKey, deleteApiKey, getApiKeysByUserId } from '@/lib/db/queries';
 import { encryptApiKey } from '@/lib/encryption';
+
+// Add GET handler to fetch user's API keys
+export async function GET(request: Request) {
+  const session = await auth();
+  if (!session?.user) {
+    return new ChatSDKError('unauthorized:api_keys').toResponse();
+  }
+
+  try {
+    const apiKeys = await getApiKeysByUserId(session.user.id);
+    return Response.json(apiKeys);
+  } catch (error) {
+    console.error('API Keys Fetch Error:', error);
+    return new ChatSDKError('bad_request:api_keys').toResponse();
+  }
+}
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -11,16 +27,17 @@ export async function POST(request: Request) {
 
   try {
     const { provider, apiKey } = await request.json();
+    console.log('Saving API key:', { provider, apiKey, userId: session.user.id });
     const encryptedValue = await encryptApiKey(apiKey);
-    
     const result = await saveApiKey({
       userId: session.user.id,
       provider,
       encryptedKey: encryptedValue,
     });
-
-    return Response.json(result);
+    console.log('Save result:', result);
+    return Response.json({ success: true, result });
   } catch (error) {
+    console.error('API Key Save Error:', error);
     return new ChatSDKError('bad_request:api_keys').toResponse();
   }
 }

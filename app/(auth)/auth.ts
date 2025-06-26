@@ -80,25 +80,27 @@ export const {
     async signIn({ user, account }) {
       // For Google OAuth, ensure user exists in our database
       if (account?.provider === 'google') {
-        const [existingUser] = await getUser(user.email!);
+        let [existingUser] = await getUser(user.email!);
         if (!existingUser) {
-          // Create user without password since they'll use OAuth
           await createUser(user.email!, DUMMY_PASSWORD);
+          [existingUser] = await getUser(user.email!); // fetch the new user
         }
+        // Attach the DB user ID to the user object for the jwt callback
+        user.id = existingUser.id;
+        user.type = 'regular';
       }
       return true;
     },
     async jwt({ token, user, account }) {
+      // Always use the DB user ID if available
       if (user) {
         token.id = user.id as string;
         token.type = user.type;
       }
-
       // For Google OAuth users, always set type as regular
       if (account?.provider === 'google') {
         token.type = 'regular';
       }
-
       return token;
     },
     async session({ session, token }) {
@@ -106,8 +108,7 @@ export const {
         session.user.id = token.id;
         session.user.type = token.type;
       }
-
       return session;
     },
-  },
+  }
 });

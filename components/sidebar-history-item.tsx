@@ -23,6 +23,7 @@ import {
   ShareIcon,
   TrashIcon,
   PinIcon,
+  // ThumbtackIcon, // Uncomment if you have a thumbtack icon
 } from "./icons";
 import { toast } from "sonner";
 import { memo, useState } from "react";
@@ -74,14 +75,15 @@ const PureChatItem = ({
         </Link>
       </SidebarMenuButton>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 ml-auto">
         <SidebarMenuAction
-          className="opacity-0 group-hover:opacity-100 transition-opacity"
+          aria-label={isPinned ? "Unpin chat" : "Pin chat"}
           onClick={handlePinChat}
+          className="mr-1"
         >
           <PinIcon
             className={cn(
-              "h-4 w-4",
+              "h-4 w-4 transition-colors cursor-pointer",
               isPinned ? "text-primary" : "text-muted-foreground"
             )}
           />

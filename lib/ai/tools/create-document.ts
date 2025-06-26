@@ -6,13 +6,18 @@ import {
   artifactKinds,
   documentHandlersByArtifactKind,
 } from '@/lib/artifacts/server';
+import { createTextDocumentHandler } from '@/artifacts/text/server';
+import { createCodeDocumentHandler } from '@/artifacts/code/server';
+import { createSheetDocumentHandler } from '@/artifacts/sheet/server';
 
 interface CreateDocumentProps {
   session: Session;
   dataStream: DataStreamWriter;
+  customApiKeys?: Record<string, string | undefined>;
+  modelId?: string;
 }
 
-export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
+export const createDocument = ({ session, dataStream, customApiKeys = {}, modelId = 'gpt-4o' }: CreateDocumentProps) =>
   tool({
     description:
       'Create a document for a writing or content creation activities. This tool will call other functions that will generate the contents of the document based on the title and kind.',
@@ -43,24 +48,30 @@ export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
         content: '',
       });
 
-      const documentHandler = documentHandlersByArtifactKind.find(
-        (documentHandlerByArtifactKind) =>
-          documentHandlerByArtifactKind.kind === kind,
-      );
+      let documentHandler;
+      if (kind === 'text') {
+        documentHandler = createTextDocumentHandler(customApiKeys, modelId);
+      } else if (kind === 'code') {
+        documentHandler = createCodeDocumentHandler(customApiKeys, modelId);
+      } else if (kind === 'sheet') {
+        documentHandler = createSheetDocumentHandler(customApiKeys, modelId);
+      } else {
+        documentHandler = documentHandlersByArtifactKind.find(
+          (documentHandlerByArtifactKind) =>
+            documentHandlerByArtifactKind.kind === kind,
+        );
+      }
 
       if (!documentHandler) {
         throw new Error(`No document handler found for kind: ${kind}`);
       }
-
       await documentHandler.onCreateDocument({
         id,
         title,
         dataStream,
         session,
       });
-
       dataStream.writeData({ type: 'finish', content: '' });
-
       return {
         id,
         title,

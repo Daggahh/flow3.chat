@@ -8,7 +8,7 @@ import {
   updateChatVisiblityById,
 } from '@/lib/db/queries';
 import type { VisibilityType } from '@/components/visibility-selector';
-import { myProvider } from '@/lib/ai/providers';
+import { createMyProvider } from '@/lib/ai/providers';
 
 export async function saveChatModelAsCookie(model: string) {
   const cookieStore = await cookies();
@@ -17,11 +17,27 @@ export async function saveChatModelAsCookie(model: string) {
 
 export async function generateTitleFromUserMessage({
   message,
+  customApiKeys,
+  selectedChatModel,
 }: {
   message: UIMessage;
+  customApiKeys?: Record<string, string>;
+  selectedChatModel: string;
 }) {
+  const provider = createMyProvider({
+    openaiKey: customApiKeys?.openai,
+    geminiKey: customApiKeys?.google,
+    anthropicKey: customApiKeys?.anthropic,
+    mistralKey: customApiKeys?.mistral,
+    cohereKey: customApiKeys?.cohere,
+    deepseekKey: customApiKeys?.deepseek,
+    perplexityKey: customApiKeys?.perplexity,
+    grokKey: customApiKeys?.grok,
+    openrouterKey: customApiKeys?.openrouter,
+  });
+  const model = provider.languageModel(selectedChatModel);
   const { text: title } = await generateText({
-    model: myProvider.languageModel('title-model'),
+    model,
     system: `\n
     - you will generate a short title based on the first message a user begins a conversation with
     - ensure it is not more than 80 characters long

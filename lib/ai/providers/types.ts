@@ -1,5 +1,3 @@
-import { AIStream } from '@/lib/ai/streams';
-
 export type SupportedModel = 
   // OpenAI Models
   | 'gpt-4-turbo-preview'  
@@ -27,6 +25,8 @@ export type SupportedModel =
   | 'gemini-1.5-pro-001'
   | 'gemini-1.5-pro-002'
   | 'gemini-2.0-pro-exp-02-05'
+  | 'gemini-1.5-flash'
+  | 'gemini-2.5-flash'
   | 'gemini-2.5-pro-preview-05-06'
   | 'gemini-2.5-pro-exp-03-25' 
   // Mistral Models
@@ -93,44 +93,4 @@ export interface ModelConfig {
     imageUnderstanding?: boolean;
     codeCompletion?: boolean;
   };
-}
-
-export interface ProviderConfig {
-  type: ProviderType;
-  apiKey: string;
-  models: ModelConfig[];
-}
-
-export interface Message {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-  name?: string;
-}
-
-export interface CompletionOptions {
-  temperature?: number;
-  maxTokens?: number;
-  topP?: number;
-  frequencyPenalty?: number;
-  presencePenalty?: number;
-}
-
-export interface ProviderInterface {
-  generateCompletion(
-    messages: Message[],
-    model: SupportedModel,
-    options?: CompletionOptions
-  ): Promise<AIStream>;
-  
-  generateImage?(
-    prompt: string,
-    options?: {
-      size?: '256x256' | '512x512' | '1024x1024';
-      quality?: 'standard' | 'hd';
-    }
-  ): Promise<string>;
-
-  estimateTokens(messages: Message[]): number;
-  
-  validateApiKey(): Promise<boolean>;
 }

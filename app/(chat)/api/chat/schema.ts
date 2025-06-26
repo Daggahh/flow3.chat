@@ -23,7 +23,8 @@ export const postRequestBodySchema = z.object({
       )
       .optional(),
   }),
-  selectedChatModel: z.enum(['chat-model', 'chat-model-reasoning']),
+  // More flexible - allows any non-empty string for model
+  selectedChatModel: z.string().min(1),
   selectedVisibilityType: z.enum(['public', 'private']),
   useWebSearch: z.boolean().optional(),
 });

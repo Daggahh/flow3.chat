@@ -10,6 +10,7 @@ import { type RequestHints, systemPrompt } from '@/lib/ai/prompts';
 import {
   createStreamId,
   deleteChatById,
+  getApiKeysByUserId,
   getChatById,
   getMessageCountByUserId,
   getMessagesByChatId,
@@ -24,7 +25,7 @@ import { updateDocument } from '@/lib/ai/tools/update-document';
 import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { getWeather } from '@/lib/ai/tools/get-weather';
 import { isProductionEnvironment } from '@/lib/constants';
-import { myProvider } from '@/lib/ai/providers';
+import { createMyProvider } from '@/lib/ai/providers';
 import { entitlementsByUserType } from '@/lib/ai/entitlements';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { geolocation } from '@vercel/functions';
@@ -38,9 +39,7 @@ import { differenceInSeconds } from 'date-fns';
 import { ChatSDKError } from '@/lib/errors';
 import { webSearchTool } from '@/lib/ai/tools/web-search';
 import { cookies } from 'next/headers';
-import { getApiKeyByProvider } from '@/lib/db/queries/api-keys';
-import { GoogleProvider } from '@/lib/ai/providers/google';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { decryptApiKey } from '@/lib/encryption';
 
 
 export const maxDuration = 60;
@@ -77,75 +76,73 @@ const GEMINI_MODELS = [
   'gemini-2.5-pro-preview-05-06',
   'gemini-2.5-pro-exp-03-25',
   'google/gemini-pro',
+  'gemini-1.5-flash',
+  'gemini-2.5-flash',
 ];
 function isGeminiModel(modelId: string): boolean {
   return GEMINI_MODELS.includes(modelId);
 }
 
 export async function POST(request: Request) {
+  console.log('--- /api/chat POST called ---');
   let requestBody: PostRequestBody;
 
   try {
     const json = await request.json();
     requestBody = postRequestBodySchema.parse(json);
-  } catch (_) {
+  } catch (err) {
+    console.error('Failed to parse request body:', err);
     return new ChatSDKError('bad_request:api').toResponse();
   }
+  console.log('Parsed requestBody:', requestBody);
 
   try {
     const { id, message, selectedChatModel, selectedVisibilityType, useWebSearch } =
       requestBody;
 
     const session = await auth();
+    console.log('Session:', session);
     const cookieStore = await cookies();
 
-    // --- Gemini Free Tier Logic ---
-    let geminiApiKey: string | undefined = undefined;
-    let usingDefaultGeminiKey = false;
-    if (isGeminiModel(selectedChatModel)) {
-      let userHasGeminiKey = false;
-      if (session?.user) {
-        // Check if user has a Gemini key
-        const userGeminiKey = await getApiKeyByProvider({
-          userId: session.user.id,
-          provider: 'google',
-        });
-        if (userGeminiKey && userGeminiKey.encryptedKey) {
-          userHasGeminiKey = true;
-          // Decrypt the key if needed (assume decrypted for now)
-          geminiApiKey = userGeminiKey.encryptedKey;
-        }
-      }
-      if (!userHasGeminiKey && process.env.GOOGLE_DEFAULT_API_KEY) {
-        usingDefaultGeminiKey = true;
-        geminiApiKey = process.env.GOOGLE_DEFAULT_API_KEY;
-        // For guests, use a signed cookie to track message count
-        let guestMessageCount = 0;
-        let guestCookie = cookieStore.get('gemini_guest_count');
-        if (guestCookie) {
-          try {
-            const { count, ts } = JSON.parse(guestCookie.value);
-            // Reset after 24h
-            if (Date.now() - ts < 24 * 60 * 60 * 1000) {
-              guestMessageCount = count;
-            }
-          } catch {}
-        }
-        if (!session?.user && guestMessageCount >= 10) {
-          return new ChatSDKError('rate_limit:chat').toResponse();
-        }
-        // For signed-in users, use DB logic (already handled below)
-        if (!session?.user) {
-          // Increment and set cookie
-          cookieStore.set('gemini_guest_count', JSON.stringify({ count: guestMessageCount + 1, ts: Date.now() }), {
-            httpOnly: true,
-            maxAge: 24 * 60 * 60,
-            sameSite: 'lax',
-          });
+    // Get all user's API keys
+    let customApiKeys: Record<string, string> = {};
+    if (session?.user) {
+      const userApiKeys = await getApiKeysByUserId(session.user.id);
+      for (const keyData of userApiKeys) {
+        const decryptedKey = await decryptApiKey(keyData.encryptedKey);
+        if (decryptedKey) {
+          customApiKeys[keyData.provider] = decryptedKey;
         }
       }
     }
-    // --- End Gemini Free Tier Logic ---
+    console.log('customApiKeys:', customApiKeys);
+    console.log('selectedChatModel:', selectedChatModel);
+
+    // For Gemini free tier, add default key if user doesn't have one
+    if (isGeminiModel(selectedChatModel) && !customApiKeys.google && process.env.GOOGLE_DEFAULT_API_KEY) {
+      // Handle rate limiting for free tier
+      let guestMessageCount = 0;
+      let guestCookie = cookieStore.get('gemini_guest_count');
+      if (guestCookie) {
+        try {
+          const { count, ts } = JSON.parse(guestCookie.value);
+          if (Date.now() - ts < 24 * 60 * 60 * 1000) {
+            guestMessageCount = count;
+          }
+        } catch {}
+      }
+      if (!session?.user && guestMessageCount >= 10) {
+        return new ChatSDKError('rate_limit:chat').toResponse();
+      }
+      if (!session?.user) {
+        cookieStore.set('gemini_guest_count', JSON.stringify({ count: guestMessageCount + 1, ts: Date.now() }), {
+          httpOnly: true,
+          maxAge: 24 * 60 * 60,
+          sameSite: 'lax',
+        });
+      }
+      customApiKeys.google = process.env.GOOGLE_DEFAULT_API_KEY;
+    }
 
     if (!session?.user) {
       return new ChatSDKError('unauthorized:chat').toResponse();
@@ -167,6 +164,8 @@ export async function POST(request: Request) {
     if (!chat) {
       const title = await generateTitleFromUserMessage({
         message,
+        customApiKeys,
+        selectedChatModel,
       });
 
       await saveChat({
@@ -214,16 +213,24 @@ export async function POST(request: Request) {
     const streamId = generateUUID();
     await createStreamId({ streamId, chatId: id });
 
+    // --- Use new dynamic provider pattern ---
+    const provider = createMyProvider({
+      openaiKey: customApiKeys.openai,
+      geminiKey: customApiKeys.google,
+      anthropicKey: customApiKeys.anthropic,
+      mistralKey: customApiKeys.mistral,
+      cohereKey: customApiKeys.cohere,
+      deepseekKey: customApiKeys.deepseek,
+      perplexityKey: customApiKeys.perplexity,
+      grokKey: customApiKeys.grok,
+      openrouterKey: customApiKeys.openrouter,
+    });
+    const modelInstance = provider.languageModel(selectedChatModel);
+    // ------------------------------------------------------
+
     const stream = createDataStream({
-      execute: (dataStream) => {
-        let modelInstance;
-        if (isGeminiModel(selectedChatModel) && geminiApiKey) {
-          // Use the correct Gemini key for this request
-          const google = createGoogleGenerativeAI({ apiKey: geminiApiKey });
-          modelInstance = google.languageModel(selectedChatModel);
-        } else {
-          modelInstance = myProvider.languageModel(selectedChatModel);
-        }
+      execute: async (dataStream) => {
+        console.log('Initializing model instance for', selectedChatModel, 'with keys:', customApiKeys);
         const result = streamText({
           model: modelInstance,
           system: systemPrompt({ selectedChatModel, requestHints }),
@@ -238,8 +245,6 @@ export async function POST(request: Request) {
                   'updateDocument',
                   'requestSuggestions',
                 ]
-              : selectedChatModel === 'chat-model-reasoning'
-              ? ['webSearch']
               : [
                   'getWeather',
                   'createDocument',
@@ -251,11 +256,13 @@ export async function POST(request: Request) {
           experimental_generateMessageId: generateUUID,
           tools: {
             getWeather,
-            createDocument: createDocument({ session, dataStream }),
-            updateDocument: updateDocument({ session, dataStream }),
+            createDocument: createDocument({ session, dataStream, customApiKeys, modelId: selectedChatModel }),
+            updateDocument: updateDocument({ session, dataStream, customApiKeys, modelId: selectedChatModel }),
             requestSuggestions: requestSuggestions({
               session,
               dataStream,
+              customApiKeys,
+              modelId: selectedChatModel,
             }),
             webSearch: webSearchTool,
           },
@@ -322,9 +329,11 @@ export async function POST(request: Request) {
       return new Response(stream);
     }
   } catch (error) {
+    console.error('Unexpected error in /api/chat:', error, (error instanceof Error ? error.stack : undefined));
     if (error instanceof ChatSDKError) {
       return error.toResponse();
     }
+    return new Response('Internal Server Error', { status: 500 });
   }
 }
 

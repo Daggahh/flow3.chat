@@ -122,6 +122,11 @@ export function Chat({
     setMessages,
   });
 
+  // Log the initialChatModel on mount
+  useEffect(() => {
+    console.log("[Chat] initialChatModel prop:", initialChatModel);
+  }, [initialChatModel]);
+
   return (
     <>
       <div className="flex flex-col min-w-0 h-dvh bg-background">

@@ -1,5 +1,6 @@
 import { SupportedModel, ProviderType } from './providers/types';
 
+// DEFAULT_CHAT_MODEL is only a fallback. The selected model should be managed via cookie/localStorage and user selection.
 export const DEFAULT_CHAT_MODEL: SupportedModel = 'gpt-4-turbo-preview';
 
 export interface ChatModel {
@@ -549,6 +550,50 @@ export const chatModels: Array<ChatModel> = [
       file_upload: true,
       text_to_speech: true,
       speech_to_text: true
+    }
+  },
+  {
+    id: 'gemini-1.5-flash',
+    name: 'Gemini 1.5 Flash',
+    description: 'Google Gemini 1.5 Flash: optimized for speed and cost-efficiency, with multimodal support.',
+    contextWindow: 1000000,
+    costPer1kTokens: 0.00025,
+    provider: 'google',
+    capabilities: {
+      chat: true,
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
+    }
+  },  
+  {
+    id: 'gemini-2.5-flash',
+    name: 'Gemini 2.5 Flash',
+    description: 'Google Gemini 2.5 Flash: fast, cost-effective, and available on free tier.',
+    contextWindow: 1000000,
+    costPer1kTokens: 0.001, 
+    provider: 'google',
+    capabilities: {
+      chat: true,
+      image_understanding: true,
+      code_completion: true,
+      function_calling: true,
+      document_analysis: true,
+      json_mode: true,
+      streaming: true,
+      vision: true,
+      tool_use: true,
+      reasoning: true,
+      multimodal: true,
+      file_upload: true
     }
   },
   {

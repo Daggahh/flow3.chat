@@ -12,6 +12,7 @@ import {
   type SetStateAction,
   type ChangeEvent,
   memo,
+  useMemo,
 } from "react";
 import { toast } from "sonner";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
@@ -138,11 +139,15 @@ function PureMultimodalInput({
   const [favourites, setFavourites] = useState<ChatModel[]>([]);
 
   // Get available models for the user
-  const userType = session.user.type;
+  const userType = session && session.user ? session.user.type : "regular";
   const availableChatModelIds =
     entitlementsByUserType[userType].availableModels;
-  const availableChatModels = chatModels.filter((chatModel) =>
-    availableChatModelIds.includes(chatModel.id)
+  const availableChatModels = useMemo(
+    () =>
+      chatModels.filter((chatModel) =>
+        availableChatModelIds.includes(chatModel.id)
+      ),
+    [availableChatModelIds] // Only recreate when availableChatModelIds changes
   );
 
   // Load favourites from IndexedDB
@@ -158,18 +163,33 @@ function PureMultimodalInput({
 
   // On mount load from localStorage or use first available model
   useEffect(() => {
-    const stored = localStorage.getItem("selectedModelId");
-    if (stored && availableChatModels.some((m) => m.id === stored)) {
-      setSelectedModelIdState(stored);
-    } else if (availableChatModels.length > 0) {
-      setSelectedModelIdState(availableChatModels[0].id);
+    // Try to get from cookie first
+    const cookieMatch = document.cookie.match(/(?:^|; )chat-model=([^;]*)/);
+    const cookieModelId = cookieMatch
+      ? decodeURIComponent(cookieMatch[1])
+      : null;
+    if (
+      cookieModelId &&
+      availableChatModels.some((m) => m.id === cookieModelId)
+    ) {
+      setSelectedModelIdState(cookieModelId);
+    } else {
+      const stored = localStorage.getItem("selectedModelId");
+      if (stored && availableChatModels.some((m) => m.id === stored)) {
+        setSelectedModelIdState(stored);
+      } else if (availableChatModels.length > 0) {
+        setSelectedModelIdState(availableChatModels[0].id);
+      }
     }
   }, [availableChatModels]);
 
-  // When user selects a model, update state and localStorage
+  // When user selects a model, update state, localStorage, and cookie
   const setSelectedModelId = (id: string) => {
     setSelectedModelIdState(id);
     localStorage.setItem("selectedModelId", id);
+    document.cookie = `chat-model=${encodeURIComponent(
+      id
+    )}; path=/; max-age=31536000`;
   };
 
   const handlePin = async (id: string) => {
@@ -195,9 +215,14 @@ function PureMultimodalInput({
   const submitForm = useCallback(() => {
     window.history.replaceState({}, "", `/chat/${chatId}`);
 
+    console.log(
+      "[MultimodalInput] submitForm selectedModelId:",
+      selectedModelId
+    );
+
     handleSubmit(undefined, {
       experimental_attachments: attachments,
-      data: { useWebSearch },
+      data: { useWebSearch, selectedChatModel: selectedModelId } as any,
     });
 
     setAttachments([]);
@@ -216,6 +241,7 @@ function PureMultimodalInput({
     width,
     chatId,
     useWebSearch,
+    selectedModelId,
   ]);
 
   const uploadFile = async (file: File) => {

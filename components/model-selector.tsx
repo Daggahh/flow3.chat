@@ -225,6 +225,19 @@ export function ModelSelectorFullCatalog({
   selectedModelId,
 }: ModelSelectorFullCatalogProps) {
   const { allCapabilities } = useModelCapabilities(availableModels);
+  const filteredFavourites = favourites.filter(
+    (m) =>
+      m.name.toLowerCase().includes(search.toLowerCase()) ||
+      m.id.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Filter availableModels by search and not in favourites
+  const filteredAvailableModels = availableModels.filter(
+    (model) =>
+      !favourites.some((fav) => fav.id === model.id) &&
+      (model.name.toLowerCase().includes(search.toLowerCase()) ||
+        model.id.toLowerCase().includes(search.toLowerCase()))
+  );
   return (
     <div className="p-0 w-[40rem] max-w-[90vw]">
       <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl p-2 w-full relative animate-in fade-in zoom-in flex flex-col max-h-[80vh] custom-scrollbar">
@@ -257,7 +270,7 @@ export function ModelSelectorFullCatalog({
               </div>
             )}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-              {favourites.map((model) => (
+              {filteredFavourites.map((model) => (
                 <Tooltip key={model.id} delayDuration={0}>
                   <TooltipTrigger asChild>
                     <div
@@ -309,7 +322,7 @@ export function ModelSelectorFullCatalog({
           <div>
             <div className="font-semibold text-sm mb-2">Other Models</div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-              {availableModels
+              {filteredAvailableModels
                 .filter(
                   (model) => !favourites.some((fav) => fav.id === model.id)
                 )
