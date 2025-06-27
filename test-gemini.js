@@ -2,7 +2,7 @@
 
 async function testGemini() {
   const res = await fetch(
-    'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=AIzaSyCNh1nIYierdDHZqNpUcafkKWFAzts8aGU',
+    'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=YOUR_API_KEY',
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
