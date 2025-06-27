@@ -10,7 +10,7 @@ A free, open-source, multi-provider AI chat platform inspired by T3.chat. Built 
 
 ---
 
-## 🚀 Features
+## Features
 
 - **Multi-provider, multi-model support:**
   - OpenAI, Google Gemini, Anthropic, Mistral, Cohere, DeepSeek, Perplexity, xAI Grok, OpenRouter
@@ -33,7 +33,23 @@ A free, open-source, multi-provider AI chat platform inspired by T3.chat. Built 
 
 ---
 
-## 🛠️ Tech Stack
+## Screenshots
+
+### Chat Interface
+
+![Chat Interface](public/screenshots/chat-interface.png)
+
+### Add or Update API Key (BYOK Modal)
+
+![Add or Update API Key](public/screenshots/BYOK-modal.png)
+
+### Manage API Keys
+
+![Manage API Keys](public/screenshots/manage-key.png)
+
+---
+
+## Tech Stack
 
 - [Next.js](https://nextjs.org) (App Router)
 - [Vercel AI SDK](https://sdk.vercel.ai/docs)
@@ -47,7 +63,7 @@ A free, open-source, multi-provider AI chat platform inspired by T3.chat. Built 
 
 ---
 
-## ⚡ Quickstart
+## Quickstart
 
 1. **Clone the repo:**
    ```bash
@@ -72,7 +88,7 @@ A free, open-source, multi-provider AI chat platform inspired by T3.chat. Built 
 
 ---
 
-## 🔑 Environment Variables
+## Environment Variables
 
 Copy `.env.example` to `.env.local` and fill in the following:
 
@@ -100,13 +116,13 @@ OPENROUTER_API_KEY=...
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please open issues or pull requests for bugs, features, or improvements.
 
 ---
 
-## 📄 License
+## License
 
 Apache 2.0. See [LICENSE](LICENSE) for details.
 
