@@ -924,24 +924,6 @@ export const chatModels: Array<ChatModel> = [
     }
   },
   {
-    id: 'deepseek-coder',
-    name: 'DeepSeek Coder',
-    description: 'DeepSeek\'s code generation model.',
-    maxTokens: 4096,
-    provider: 'deepseek',
-    contextWindow: 128000,
-    costPer1kTokens: 0.01,
-    capabilities: {
-      chat: true,
-      code_completion: true,
-      function_calling: true,
-      json_mode: true,
-      streaming: true,
-      tool_use: true,
-      file_upload: true
-    }
-  },
-  {
     id: 'deepseek-reasoner',
     name: 'DeepSeek Reasoner',
     description: 'DeepSeek\'s advanced reasoning model.',

@@ -1,5 +1,5 @@
-import useSWR from 'swr';
-import { useRef, useEffect, useCallback } from 'react';
+import useSWR from "swr";
+import { useRef, useEffect, useCallback, useState } from "react";
 
 type ScrollFlag = ScrollBehavior | false;
 
@@ -8,13 +8,28 @@ export function useScrollToBottom() {
   const endRef = useRef<HTMLDivElement>(null);
 
   const { data: isAtBottom = false, mutate: setIsAtBottom } = useSWR(
-    'messages:is-at-bottom',
+    "messages:is-at-bottom",
     null,
-    { fallbackData: false },
+    { fallbackData: false }
   );
 
   const { data: scrollBehavior = false, mutate: setScrollBehavior } =
-    useSWR<ScrollFlag>('messages:should-scroll', null, { fallbackData: false });
+    useSWR<ScrollFlag>("messages:should-scroll", null, { fallbackData: false });
+
+  const [isScrollable, setIsScrollable] = useState(false);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const checkScrollable = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      setIsScrollable(el.scrollHeight > el.clientHeight + 2); // allow for rounding
+    };
+    checkScrollable();
+    const resizeObserver = new window.ResizeObserver(checkScrollable);
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
 
   useEffect(() => {
     if (scrollBehavior) {
@@ -24,10 +39,10 @@ export function useScrollToBottom() {
   }, [setScrollBehavior, scrollBehavior]);
 
   const scrollToBottom = useCallback(
-    (scrollBehavior: ScrollBehavior = 'smooth') => {
+    (scrollBehavior: ScrollBehavior = "smooth") => {
       setScrollBehavior(scrollBehavior);
     },
-    [setScrollBehavior],
+    [setScrollBehavior]
   );
 
   function onViewportEnter() {
@@ -42,6 +57,7 @@ export function useScrollToBottom() {
     containerRef,
     endRef,
     isAtBottom,
+    isScrollable,
     scrollToBottom,
     onViewportEnter,
     onViewportLeave,

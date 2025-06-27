@@ -21,16 +21,15 @@ import { useProviderIcon } from "@/hooks/use-provider-icon";
 import { SearchIcon } from "./icons";
 import { useState } from "react";
 import { BYOKModal } from "./BYOKModal";
+import { useSelectedModel } from "@/hooks/use-selected-model";
 
 function PureChatHeader({
   chatId,
-  selectedModelId,
   selectedVisibilityType,
   isReadonly,
   session,
 }: {
   chatId: string;
-  selectedModelId: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
   session: Session;
@@ -40,6 +39,7 @@ function PureChatHeader({
   const { width: windowWidth } = useWindowSize();
   const [showBYOKModal, setShowBYOKModal] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const { selectedModelId } = useSelectedModel();
   useHotkeys([
     [
       "mod+shift+k",
@@ -60,7 +60,6 @@ function PureChatHeader({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open]);
-  const providerIcon = useProviderIcon("openai"); // Default, can be dynamic later
 
   return (
     <header className="flex sticky top-0 bg-background py-1.5 items-center px-2 md:px-2 gap-2">
@@ -145,6 +144,4 @@ function PureChatHeader({
   );
 }
 
-export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
-  return prevProps.selectedModelId === nextProps.selectedModelId;
-});
+export const ChatHeader = memo(PureChatHeader);

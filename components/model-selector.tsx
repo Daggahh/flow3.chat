@@ -8,9 +8,6 @@ import { CheckCircleFillIcon } from "./icons";
 import {
   FiChevronRight,
   FiChevronLeft,
-  FiImage,
-  FiEye,
-  FiCode,
   FiFilter,
   FiX,
   FiSearch,
@@ -25,6 +22,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useModelCapabilities } from "@/hooks/use-model-capabilities";
 import { FaThumbtack, FaThumbtackSlash } from "react-icons/fa6";
+import {
+  useSelectedModel,
+  useSyncSelectedModelCookie,
+} from "@/hooks/use-selected-model";
 
 const MAX_FAVOURITES = 10;
 
@@ -89,6 +90,10 @@ export function ModelSelectorQuickPick({
     }
     return models.slice(0, MAX_FAVOURITES);
   }, [favourites, search, filterList]);
+
+  const { selectedModelId: currentSelectedModelId, setSelectedModelId } =
+    useSelectedModel();
+  useSyncSelectedModelCookie(currentSelectedModelId);
 
   return (
     <div className="p-0 w-96">
@@ -238,6 +243,11 @@ export function ModelSelectorFullCatalog({
       (model.name.toLowerCase().includes(search.toLowerCase()) ||
         model.id.toLowerCase().includes(search.toLowerCase()))
   );
+
+  const { selectedModelId: currentSelectedModelId, setSelectedModelId } =
+    useSelectedModel();
+  useSyncSelectedModelCookie(currentSelectedModelId);
+
   return (
     <div className="p-0 w-[40rem] max-w-[90vw]">
       <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl p-2 w-full relative animate-in fade-in zoom-in flex flex-col max-h-[80vh] custom-scrollbar">

@@ -50,7 +50,6 @@ export type SupportedModel =
   | 'command-light-nightly'
   // DeepSeek Models
   | 'deepseek-chat'
-  | 'deepseek-coder'
   | 'deepseek-reasoner'
   // Perplexity Models
   | 'pplx-70b-chat'

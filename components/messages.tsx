@@ -8,9 +8,8 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import { motion } from "framer-motion";
 import { useMessages } from "@/hooks/use-messages";
 import { SuggestedActions } from "./suggested-actions";
-import { ArrowDown } from "lucide-react";
-import { Button } from "./ui/button";
 import { AnimatePresence } from "framer-motion";
+import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 
 interface MessagesProps {
   chatId: string;
@@ -23,6 +22,7 @@ interface MessagesProps {
   isArtifactVisible: boolean;
   append: any;
   selectedVisibilityType: any;
+  initialChatModel: string;
 }
 
 function ChatWelcomeOrSuggested({
@@ -59,49 +59,26 @@ function PureMessages({
   isArtifactVisible,
   append,
   selectedVisibilityType,
+  initialChatModel,
 }: MessagesProps) {
-  const {
-    containerRef: messagesContainerRef,
-    endRef: messagesEndRef,
-    onViewportEnter,
-    onViewportLeave,
-    hasSentMessage,
-    isAtBottom,
-    scrollToBottom,
-  } = useMessages({
+  const { hasSentMessage, onViewportEnter, onViewportLeave } = useMessages({
     chatId,
     status,
   });
+
+  const {
+    containerRef: messagesContainerRef,
+    endRef: messagesEndRef,
+    isAtBottom,
+    isScrollable,
+    scrollToBottom,
+  } = useScrollToBottom();
 
   return (
     <div
       ref={messagesContainerRef}
       className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-scroll pt-4 relative custom-scrollbar"
     >
-      <AnimatePresence>
-        {!isAtBottom && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="absolute left-[47%] md:left-[48%] bottom-2 -translate-x-1/2 z-50"
-          >
-            <Button
-              data-testid="scroll-to-bottom-button"
-              className="rounded-full"
-              size="icon"
-              variant="outline"
-              onClick={(event) => {
-                event.preventDefault();
-                scrollToBottom && scrollToBottom();
-              }}
-            >
-              <ArrowDown />
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
       {messages.length === 0 ? (
         <ChatWelcomeOrSuggested
           chatId={chatId}
@@ -127,12 +104,15 @@ function PureMessages({
           requiresScrollPadding={
             hasSentMessage && index === messages.length - 1
           }
+          initialChatModel={initialChatModel}
         />
       ))}
 
       {status === "submitted" &&
         messages.length > 0 &&
-        messages[messages.length - 1].role === "user" && <ThinkingMessage />}
+        messages[messages.length - 1].role === "user" && (
+          <ThinkingMessage initialChatModel={initialChatModel} />
+        )}
 
       <motion.div
         ref={messagesEndRef}

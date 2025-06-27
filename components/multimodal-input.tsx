@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import equal from "fast-deep-equal";
 import type { UseChatHelpers } from "@ai-sdk/react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowDown } from "lucide-react";
 import type { VisibilityType } from "./visibility-selector";
 import { Search as SearchIcon, GlobeIcon } from "lucide-react";
@@ -41,6 +41,11 @@ import { db } from "@/lib/db/local";
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
 import { FiChevronDown } from "react-icons/fi";
+import {
+  useSelectedModel,
+  useSyncSelectedModelCookie,
+} from "@/hooks/use-selected-model";
+import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 
 function PureMultimodalInput({
   chatId,
@@ -75,6 +80,8 @@ function PureMultimodalInput({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
+  const { isAtBottom, scrollToBottom } = useScrollToBottom();
+  const inputContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -131,7 +138,8 @@ function PureMultimodalInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
   const [useWebSearch, setUseWebSearch] = useState(false);
-  const [selectedModelId, setSelectedModelIdState] = useState<string>("");
+  const { selectedModelId, setSelectedModelId } = useSelectedModel();
+  useSyncSelectedModelCookie(selectedModelId);
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [showFullCatalog, setShowFullCatalog] = useState(false);
   const [search, setSearch] = useState("");
@@ -160,57 +168,6 @@ function PureMultimodalInput({
       );
     });
   }, [availableChatModels]);
-
-  // On mount load from localStorage or use first available model
-  useEffect(() => {
-    // Try to get from cookie first
-    const cookieMatch = document.cookie.match(/(?:^|; )chat-model=([^;]*)/);
-    const cookieModelId = cookieMatch
-      ? decodeURIComponent(cookieMatch[1])
-      : null;
-    if (
-      cookieModelId &&
-      availableChatModels.some((m) => m.id === cookieModelId)
-    ) {
-      setSelectedModelIdState(cookieModelId);
-    } else {
-      const stored = localStorage.getItem("selectedModelId");
-      if (stored && availableChatModels.some((m) => m.id === stored)) {
-        setSelectedModelIdState(stored);
-      } else if (availableChatModels.length > 0) {
-        setSelectedModelIdState(availableChatModels[0].id);
-      }
-    }
-  }, [availableChatModels]);
-
-  // When user selects a model, update state, localStorage, and cookie
-  const setSelectedModelId = (id: string) => {
-    setSelectedModelIdState(id);
-    localStorage.setItem("selectedModelId", id);
-    document.cookie = `chat-model=${encodeURIComponent(
-      id
-    )}; path=/; max-age=31536000`;
-  };
-
-  const handlePin = async (id: string) => {
-    if (favourites.length >= 10) {
-      toast.error("You can only pin up to 10 models.");
-      return;
-    }
-    const model = availableChatModels.find((m) => m.id === id);
-    if (!model) return;
-    await db.model_favourites.add({
-      id: `${id}-fav`,
-      modelId: id,
-      createdAt: new Date(),
-      synced: false,
-    });
-    setFavourites((favs) => [...favs, model]);
-  };
-  const handleUnpin = async (id: string) => {
-    await db.model_favourites.where("modelId").equals(id).delete();
-    setFavourites((favs) => favs.filter((f) => f.id !== id));
-  };
 
   const submitForm = useCallback(() => {
     window.history.replaceState({}, "", `/chat/${chatId}`);
@@ -302,8 +259,67 @@ function PureMultimodalInput({
     setUseWebSearch((prev) => !prev);
   };
 
+  const handlePin = async (id: string) => {
+    if (favourites.length >= 10) {
+      toast.error("You can only pin up to 10 models.");
+      return;
+    }
+    const model = availableChatModels.find((m) => m.id === id);
+    if (!model) return;
+    await db.model_favourites.add({
+      id: `${id}-fav`,
+      modelId: id,
+      createdAt: new Date(),
+      synced: false,
+    });
+    setFavourites((favs) => [...favs, model]);
+  };
+
+  const handleUnpin = async (id: string) => {
+    await db.model_favourites.where("modelId").equals(id).delete();
+    setFavourites((favs) => favs.filter((f) => f.id !== id));
+  };
+
+  useEffect(() => {
+    if (status === "submitted") {
+      scrollToBottom();
+    }
+  }, [status, scrollToBottom]);
+
   return (
     <div className="relative w-full flex flex-col gap-4">
+      <AnimatePresence>
+        {!isAtBottom && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            style={{
+              position: "absolute",
+              transform: "translateX(-50%)",
+              bottom: inputContainerRef.current
+                ? `${inputContainerRef.current.offsetHeight + 16}px`
+                : "112px",
+              zIndex: 50,
+            }}
+            className="left-[47%] md:left-[47%]"
+          >
+            <Button
+              data-testid="scroll-to-bottom-button"
+              className="rounded-full"
+              size="icon"
+              variant="outline"
+              onClick={(event) => {
+                event.preventDefault();
+                scrollToBottom();
+              }}
+            >
+              <ArrowDown />
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <input
         type="file"
         className="fixed -top-4 -left-4 size-0.5 opacity-0 pointer-events-none"
@@ -337,6 +353,7 @@ function PureMultimodalInput({
       )}
 
       <div
+        ref={inputContainerRef}
         className="flex flex-col w-full bg-muted rounded-2xl p-2 pb-2"
         style={{ minHeight: "96px", maxHeight: "22rem" }}
       >

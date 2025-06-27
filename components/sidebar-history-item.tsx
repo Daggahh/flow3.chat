@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { memo, useState } from "react";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import { cn } from "@/lib/utils";
+import { FaThumbtack } from "react-icons/fa6";
 
 const PureChatItem = ({
   chat,
@@ -76,20 +77,6 @@ const PureChatItem = ({
       </SidebarMenuButton>
 
       <div className="flex items-center gap-1 ml-auto">
-        <SidebarMenuAction
-          aria-label={isPinned ? "Unpin chat" : "Pin chat"}
-          onClick={handlePinChat}
-          className="mr-1"
-        >
-          <PinIcon
-            className={cn(
-              "h-4 w-4 transition-colors cursor-pointer",
-              isPinned ? "text-primary" : "text-muted-foreground"
-            )}
-          />
-          <span className="sr-only">{isPinned ? "Unpin" : "Pin"}</span>
-        </SidebarMenuAction>
-
         <DropdownMenu modal={true}>
           <DropdownMenuTrigger asChild>
             <SidebarMenuAction
@@ -102,6 +89,19 @@ const PureChatItem = ({
           </DropdownMenuTrigger>
 
           <DropdownMenuContent side="bottom" align="end">
+            <DropdownMenuItem
+              className="cursor-pointer flex-row gap-2"
+              onClick={handlePinChat}
+              aria-label={isPinned ? "Unpin chat" : "Pin chat"}
+            >
+              <FaThumbtack
+                className={cn(
+                  "h-4 w-4",
+                  isPinned ? "text-primary" : "text-muted-foreground"
+                )}
+              />
+              <span>{isPinned ? "Unpin" : "Pin"}</span>
+            </DropdownMenuItem>
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="cursor-pointer">
                 <ShareIcon />

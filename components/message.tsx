@@ -19,6 +19,8 @@ import { MessageEditor } from "./message-editor";
 import { DocumentPreview } from "./document-preview";
 import { MessageReasoning } from "./message-reasoning";
 import type { UseChatHelpers } from "@ai-sdk/react";
+import { useProviderIcon } from "@/hooks/use-provider-icon";
+import { chatModels } from "@/lib/ai/models";
 
 const PurePreviewMessage = ({
   chatId,
@@ -29,6 +31,7 @@ const PurePreviewMessage = ({
   reload,
   isReadonly,
   requiresScrollPadding,
+  initialChatModel,
 }: {
   chatId: string;
   message: UIMessage;
@@ -38,8 +41,16 @@ const PurePreviewMessage = ({
   reload: UseChatHelpers["reload"];
   isReadonly: boolean;
   requiresScrollPadding: boolean;
+  initialChatModel: string;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
+  // Get provider for assistant messages
+  let providerIcon = null;
+  if (message.role === "assistant") {
+    const model = chatModels.find((m) => m.id === initialChatModel);
+    const provider = model?.provider || "openai";
+    providerIcon = useProviderIcon(provider);
+  }
 
   return (
     <AnimatePresence>
@@ -61,9 +72,7 @@ const PurePreviewMessage = ({
         >
           {message.role === "assistant" && (
             <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border bg-background">
-              <div className="translate-y-px">
-                <SparklesIcon size={14} />
-              </div>
+              <div className="translate-y-px">{providerIcon}</div>
             </div>
           )}
 
@@ -284,8 +293,16 @@ export const PreviewMessage = memo(
   }
 );
 
-export const ThinkingMessage = () => {
+export const ThinkingMessage = ({
+  initialChatModel,
+}: {
+  initialChatModel: string;
+}) => {
   const role = "assistant";
+  // Get provider icon for the current model
+  const model = chatModels.find((m) => m.id === initialChatModel);
+  const provider = model?.provider || "openai";
+  const providerIcon = useProviderIcon(provider);
 
   return (
     <motion.div
@@ -304,7 +321,7 @@ export const ThinkingMessage = () => {
         )}
       >
         <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
-          <SparklesIcon size={14} />
+          {providerIcon}
         </div>
 
         <div className="flex flex-col gap-2 w-full">

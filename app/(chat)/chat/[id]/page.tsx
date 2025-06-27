@@ -5,9 +5,9 @@ import { auth } from "@/app/(auth)/auth";
 import { Chat } from "@/components/chat";
 import { getChatById, getMessagesByChatId } from "@/lib/db/queries";
 import { DataStreamHandler } from "@/components/data-stream-handler";
-import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 import type { DBMessage } from "@/lib/db/schema";
 import type { Attachment, UIMessage } from "ai";
+import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 
 export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -51,19 +51,8 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     }));
   }
 
-  const cookieStore = await cookies();
-  const chatModelFromCookie = cookieStore.get("chat-model");
-  let initialChatModel = undefined;
-  if (chatModelFromCookie) {
-    initialChatModel = chatModelFromCookie.value;
-  } else if (typeof window !== "undefined") {
-    // SSR-safe: fallback to localStorage if available
-    try {
-      const stored = window.localStorage.getItem("selectedModelId");
-      if (stored) initialChatModel = stored;
-    } catch {}
-  }
-  if (!initialChatModel) initialChatModel = DEFAULT_CHAT_MODEL;
+  // Remove all logic for initialChatModel from cookie/localStorage
+  const initialChatModel = DEFAULT_CHAT_MODEL;
 
   return (
     <>

@@ -20,6 +20,7 @@ import { useSearchParams } from "next/navigation";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { ChatSDKError } from "@/lib/errors";
+import { useSelectedModel } from "@/hooks/use-selected-model";
 
 export function Chat({
   id,
@@ -45,6 +46,8 @@ export function Chat({
     initialVisibilityType,
   });
 
+  const { selectedModelId } = useSelectedModel();
+
   const {
     messages,
     setMessages,
@@ -67,7 +70,7 @@ export function Chat({
     experimental_prepareRequestBody: (body) => ({
       id,
       message: body.messages.at(-1),
-      selectedChatModel: initialChatModel,
+      selectedChatModel: selectedModelId || initialChatModel,
       selectedVisibilityType: visibilityType,
       ...(typeof body.requestData === "object" &&
       body.requestData !== null &&
@@ -132,7 +135,6 @@ export function Chat({
       <div className="flex flex-col min-w-0 h-dvh bg-background">
         <ChatHeader
           chatId={id}
-          selectedModelId={initialChatModel}
           selectedVisibilityType={initialVisibilityType}
           isReadonly={isReadonly}
           session={session}
@@ -149,6 +151,7 @@ export function Chat({
           isArtifactVisible={isArtifactVisible}
           append={append}
           selectedVisibilityType={visibilityType}
+          initialChatModel={selectedModelId || initialChatModel}
         />
 
         <form className="flex mx-auto px-4 bg-transparent pb-3 md:pb-2 gap-2 w-full md:max-w-3xl">
