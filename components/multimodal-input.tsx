@@ -41,10 +41,7 @@ import { db } from "@/lib/db/local";
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
 import { FiChevronDown } from "react-icons/fi";
-import {
-  useSelectedModel,
-  useSyncSelectedModelCookie,
-} from "@/hooks/use-selected-model";
+import { useSelectedModel } from "@/hooks/use-selected-model";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 
 function PureMultimodalInput({
@@ -140,9 +137,11 @@ function PureMultimodalInput({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
-  const [useWebSearch, setUseWebSearch] = useState(false);
+  const [useWebSearch, setUseWebSearch] = useLocalStorage(
+    "useWebSearch",
+    false
+  );
   const { selectedModelId, setSelectedModelId } = useSelectedModel();
-  useSyncSelectedModelCookie(selectedModelId);
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [showFullCatalog, setShowFullCatalog] = useState(false);
   const [search, setSearch] = useState("");
@@ -151,34 +150,33 @@ function PureMultimodalInput({
 
   // Get available models for the user
   const userType = session && session.user ? session.user.type : "regular";
-  const availableChatModelIds =
-    entitlementsByUserType[userType].availableModels;
+  const availableChatModelIds = useMemo(
+    () => entitlementsByUserType[userType].availableModels,
+    [userType]
+  );
   const availableChatModels = useMemo(
     () =>
       chatModels.filter((chatModel) =>
         availableChatModelIds.includes(chatModel.id)
       ),
-    [availableChatModelIds] // Only recreate when availableChatModelIds changes
+    [availableChatModelIds]
   );
 
-  // Load favourites from IndexedDB
+  // Load favourites from IndexedDB - only when availableChatModels changes
   useEffect(() => {
-    db.model_favourites.toArray().then((favs) => {
+    const loadFavourites = async () => {
+      const favs = await db.model_favourites.toArray();
       setFavourites(
         favs
           .map((f) => availableChatModels.find((m) => m.id === f.modelId))
           .filter((m): m is ChatModel => Boolean(m))
       );
-    });
+    };
+    loadFavourites();
   }, [availableChatModels]);
 
   const submitForm = useCallback(() => {
     window.history.replaceState({}, "", `/chat/${chatId}`);
-
-    console.log(
-      "[MultimodalInput] submitForm selectedModelId:",
-      selectedModelId
-    );
 
     handleSubmit(undefined, {
       experimental_attachments: attachments,
@@ -188,7 +186,8 @@ function PureMultimodalInput({
     setAttachments([]);
     setLocalStorageInput("");
     resetHeight();
-    setUseWebSearch(false);
+    // Don't reset web search state - let user keep it enabled if they want
+    // setUseWebSearch(false);
 
     if (width && width > 768) {
       textareaRef.current?.focus();
@@ -260,8 +259,9 @@ function PureMultimodalInput({
 
   const handleWebSearch = useCallback(() => {
     if (!input.trim()) return;
-    setUseWebSearch((prev) => !prev);
-  }, [input]);
+    const newWebSearchState = !useWebSearch;
+    setUseWebSearch(newWebSearchState);
+  }, [input, useWebSearch]);
 
   const handlePin = useCallback(
     async (id: string) => {
@@ -289,7 +289,8 @@ function PureMultimodalInput({
 
   useEffect(() => {
     if (status === "submitted") {
-      scrollToBottom();
+      // Don't auto-scroll when message is submitted - let user see their message
+      // scrollToBottom();
     }
   }, [status, scrollToBottom]);
 
@@ -475,7 +476,9 @@ function PureMultimodalInput({
               data-testid="web-search-button"
               className={cx(
                 "rounded-md p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200 flex items-center gap-1",
-                useWebSearch ? "bg-blue-100 dark:bg-blue-900 text-blue-700" : ""
+                useWebSearch
+                  ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700"
+                  : ""
               )}
               onClick={(e) => {
                 e.preventDefault();

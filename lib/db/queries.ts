@@ -215,8 +215,29 @@ export async function saveMessages({
   messages: Array<DBMessage>;
 }) {
   try {
-    return await db.insert(message).values(messages);
+    console.log('Saving messages:', messages.length, 'messages');
+    console.log('Message structure:', JSON.stringify(messages[0], null, 2));
+    
+    // Filter out messages that already exist to prevent duplicate key errors
+    const messagesToSave = [];
+    for (const msg of messages) {
+      const existing = await db.select().from(message).where(eq(message.id, msg.id));
+      if (existing.length === 0) {
+        messagesToSave.push(msg);
+      } else {
+        console.log('Message already exists, skipping save:', msg.id);
+      }
+    }
+    
+    if (messagesToSave.length === 0) {
+      console.log('No new messages to save');
+      return;
+    }
+    
+    return await db.insert(message).values(messagesToSave);
   } catch (error) {
+    console.error('Database error in saveMessages:', error);
+    console.error('Messages that failed to save:', messages);
     throw new ChatSDKError('bad_request:database', 'Failed to save messages');
   }
 }
@@ -596,3 +617,4 @@ export async function getApiKeysByUserId(userId: string) {
     .from(apiKey)
     .where(eq(apiKey.userId, userId));
 }
+

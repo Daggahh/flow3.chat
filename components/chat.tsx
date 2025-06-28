@@ -67,18 +67,18 @@ export function Chat({
     sendExtraMessageFields: true,
     generateId: generateUUID,
     fetch: fetchWithErrorHandlers,
-    experimental_prepareRequestBody: (body) => ({
-      id,
-      message: body.messages.at(-1),
-      selectedChatModel: selectedModelId || initialChatModel,
-      selectedVisibilityType: visibilityType,
-      ...(typeof body.requestData === "object" &&
-      body.requestData !== null &&
-      "useWebSearch" in body.requestData &&
-      typeof (body.requestData as any).useWebSearch === "boolean"
-        ? { useWebSearch: (body.requestData as any).useWebSearch }
-        : {}),
-    }),
+    experimental_prepareRequestBody: (body) => {
+      const requestData = body.requestData as any;
+      const useWebSearch = requestData?.useWebSearch;
+
+      return {
+        id,
+        message: body.messages.at(-1),
+        selectedChatModel: selectedModelId || initialChatModel,
+        selectedVisibilityType: visibilityType,
+        ...(typeof useWebSearch === "boolean" ? { useWebSearch } : {}),
+      };
+    },
     onFinish: () => {
       mutate(unstable_serialize(getChatHistoryPaginationKey));
     },

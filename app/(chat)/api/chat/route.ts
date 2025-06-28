@@ -102,6 +102,7 @@ export async function POST(request: Request) {
 
     const session = await auth();
     console.log('Session:', session);
+    console.log('Web search enabled:', useWebSearch);
     const cookieStore = await cookies();
 
     // Get all user's API keys
@@ -231,6 +232,12 @@ export async function POST(request: Request) {
     const stream = createDataStream({
       execute: async (dataStream) => {
         console.log('Initializing model instance for', selectedChatModel, 'with keys:', customApiKeys);
+        console.log('Web search tool configuration:', {
+          useWebSearch,
+          activeTools: useWebSearch
+            ? ['webSearch', 'getWeather', 'createDocument', 'updateDocument', 'requestSuggestions']
+            : ['getWeather', 'createDocument', 'updateDocument', 'requestSuggestions', 'webSearch']
+        });
         const result = streamText({
           model: modelInstance,
           system: systemPrompt({ selectedChatModel, requestHints }),

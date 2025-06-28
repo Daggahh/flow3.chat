@@ -140,17 +140,12 @@ export function SidebarHistory({
     );
   }, [paginatedChatHistories]);
 
-  // Memoize the onChatsUpdate callback
-  const memoizedOnChatsUpdate = useCallback(() => {
+  // Update parent component with current chats
+  useEffect(() => {
     if (onChatsUpdate) {
       onChatsUpdate(allChats);
     }
-  }, [onChatsUpdate, allChats]);
-
-  // Update parent component with current chats
-  useEffect(() => {
-    memoizedOnChatsUpdate();
-  }, [memoizedOnChatsUpdate]);
+  }, [allChats, onChatsUpdate]);
 
   const handleDelete = useCallback(async () => {
     const deletePromise = fetch(`/api/chat?id=${deleteId}`, {

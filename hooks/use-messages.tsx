@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useScrollToBottom } from "./use-scroll-to-bottom";
 import type { UseChatHelpers } from "@ai-sdk/react";
 
@@ -20,18 +20,31 @@ export function useMessages({
 
   const [hasSentMessage, setHasSentMessage] = useState(false);
 
+  // Stable scroll function
+  const scrollToLastMessage = useCallback(() => {
+    setTimeout(() => {
+      const messages = document.querySelectorAll('[data-role="user"]');
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage) {
+        lastMessage.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 100);
+  }, []);
+
+  // Reset when chat changes
   useEffect(() => {
     if (chatId) {
-      scrollToBottom("instant");
-      setHasSentMessage((prev) => (prev ? false : prev));
+      setHasSentMessage(false);
     }
   }, [chatId]);
 
+  // Handle message submission
   useEffect(() => {
     if (status === "submitted") {
       setHasSentMessage(true);
+      scrollToLastMessage();
     }
-  }, [status]);
+  }, [status, scrollToLastMessage]);
 
   return {
     containerRef,

@@ -94,7 +94,6 @@ export function ModelSelectorQuickPick({
 
   const { selectedModelId: currentSelectedModelId, setSelectedModelId } =
     useSelectedModel();
-  useSyncSelectedModelCookie(currentSelectedModelId);
 
   const handleSelect = useCallback(
     (id: string) => {
@@ -289,7 +288,6 @@ export function ModelSelectorFullCatalog({
 
   const { selectedModelId: currentSelectedModelId, setSelectedModelId } =
     useSelectedModel();
-  useSyncSelectedModelCookie(currentSelectedModelId);
 
   const handleSelect = useCallback(
     (id: string) => {

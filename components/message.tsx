@@ -3,10 +3,15 @@
 import type { UIMessage } from "ai";
 import cx from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
-import { memo, useState } from "react";
+import { memo, useState, useCallback } from "react";
 import type { Vote } from "@/lib/db/schema";
 import { DocumentToolCall, DocumentToolResult } from "./document";
-import { PencilEditIcon, SparklesIcon } from "./icons";
+import {
+  PencilEditIcon,
+  SparklesIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from "./icons";
 import { Markdown } from "./markdown";
 import { MessageActions } from "./message-actions";
 import { PreviewAttachment } from "./preview-attachment";
@@ -44,6 +49,8 @@ const PurePreviewMessage = ({
   initialChatModel: string;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
+  const [sourcesExpanded, setSourcesExpanded] = useState(false);
+
   // Get provider for assistant messages
   let providerIcon = null;
   if (message.role === "assistant") {
@@ -51,6 +58,20 @@ const PurePreviewMessage = ({
     const provider = model?.provider || "openai";
     providerIcon = useProviderIcon(provider);
   }
+
+  const handleRedo = useCallback(() => {
+    // Remove the current assistant message and reload
+    setMessages((messages) => {
+      const newMessages = messages.filter((msg) => msg.id !== message.id);
+      return newMessages;
+    });
+
+    reload();
+  }, [message.id, setMessages, reload]);
+
+  const toggleSources = useCallback(() => {
+    setSourcesExpanded((prev) => !prev);
+  }, []);
 
   return (
     <AnimatePresence>
@@ -139,7 +160,12 @@ const PurePreviewMessage = ({
                             message.role === "user",
                         })}
                       >
-                        <Markdown>{sanitizeText(part.text)}</Markdown>
+                        <Markdown>
+                          {sanitizeText(part.text).replace(
+                            /<sup>\[([^\]]+)\]<\/sup>/g,
+                            "^[$1]"
+                          )}
+                        </Markdown>
                       </div>
                     </div>
                   );
@@ -200,7 +226,7 @@ const PurePreviewMessage = ({
                 if (state === "result") {
                   const { result } = toolInvocation;
 
-                  // Render web search citations as footnotes if toolName is webSearch
+                  // Render web search citations as collapsible footnotes if toolName is webSearch
                   if (
                     toolName === "webSearch" &&
                     Array.isArray(result) &&
@@ -211,24 +237,49 @@ const PurePreviewMessage = ({
                         key={toolCallId}
                         className="mt-2 text-xs text-muted-foreground"
                       >
-                        <div className="font-semibold mb-1">Sources:</div>
-                        <ol className="list-decimal list-inside space-y-1">
-                          {result.map((item, i) => (
-                            <li key={item.url}>
-                              <a
-                                href={item.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="underline"
-                              >
-                                {item.title || item.url}
-                              </a>
-                              {item.snippet ? (
-                                <span className="ml-1">- {item.snippet}</span>
-                              ) : null}
-                            </li>
-                          ))}
-                        </ol>
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="font-semibold">Sources:</div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs"
+                            onClick={toggleSources}
+                          >
+                            {sourcesExpanded ? (
+                              <ChevronUpIcon className="w-3 h-3" />
+                            ) : (
+                              <ChevronDownIcon className="w-3 h-3" />
+                            )}
+                          </Button>
+                        </div>
+                        <AnimatePresence>
+                          {sourcesExpanded && (
+                            <motion.ol
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="list-decimal list-inside space-y-1 overflow-hidden"
+                            >
+                              {result.map((item, i) => (
+                                <li key={item.url}>
+                                  <a
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="underline"
+                                  >
+                                    {item.title || item.url}
+                                  </a>
+                                  {item.snippet ? (
+                                    <span className="ml-1">
+                                      - {item.snippet}
+                                    </span>
+                                  ) : null}
+                                </li>
+                              ))}
+                            </motion.ol>
+                          )}
+                        </AnimatePresence>
                       </div>
                     );
                   }
@@ -270,6 +321,7 @@ const PurePreviewMessage = ({
                 message={message}
                 vote={vote}
                 isLoading={isLoading}
+                onRedo={message.role === "assistant" ? handleRedo : undefined}
               />
             )}
           </div>
