@@ -131,5 +131,3 @@ Apache 2.0. See [LICENSE](LICENSE) for details.
 ---
 
 > Not affiliated with Vercel or T3. This is a community-driven, privacy-first AI chat platform.
-
-[Connect with me on LinkedIn](https://www.linkedin.com/in/your-linkedin/) (replace with your link)
