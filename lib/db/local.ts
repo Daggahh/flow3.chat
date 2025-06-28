@@ -18,6 +18,7 @@ export interface LocalConversation {
   visibility: "public" | "private"
   isPinned: boolean
   synced: boolean
+  image?: string
 }
 
 export type ApiKeyProvider =

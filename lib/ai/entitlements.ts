@@ -20,7 +20,7 @@ export const entitlementsByUserType: Record<UserType, Entitlements> = {
    * For users without an account - Limited model access
    */
   guest: {
-    maxMessagesPerDay: 20,
+    maxMessagesPerDay: 10,
     availableModels: [
       // Keep a curated subset for guests, or use allModelIds for all
       'gpt-3.5-turbo',
@@ -55,7 +55,7 @@ export const entitlementsByUserType: Record<UserType, Entitlements> = {
    * For users with an account - Full model access
    */
   regular: {
-    maxMessagesPerDay: 100,
+    maxMessagesPerDay: 20,
     availableModels: allModelIds, // All models for regular users
     maxTokensPerMessage: 8000,
     maxImagesPerDay: 20,

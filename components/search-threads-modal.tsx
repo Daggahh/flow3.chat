@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
@@ -13,6 +13,7 @@ import { SearchIcon } from "@/components/icons";
 import type { Chat } from "@/lib/db/schema";
 import { groupChatsByDate } from "./sidebar-history";
 import { ChatItem } from "./sidebar-history-item";
+import { useRouter } from "next/navigation";
 
 interface SearchThreadsModalProps {
   isOpen: boolean;
@@ -27,24 +28,51 @@ export function SearchThreadsModal({
 }: SearchThreadsModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   // Filter chats based on search query
-  const filteredChats = chats.filter((chat) =>
-    chat.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredChats = useMemo(
+    () =>
+      chats.filter((chat) =>
+        chat.title.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [chats, searchQuery]
   );
 
   // Group filtered chats by date
-  const groupedChats = groupChatsByDate(filteredChats);
+  const groupedChats = useMemo(
+    () => groupChatsByDate(filteredChats),
+    [filteredChats]
+  );
+
+  const handleChatClick = useCallback(
+    (chat: Chat) => {
+      onClose();
+      router.push(`/chat/${chat.id}`);
+    },
+    [onClose, router]
+  );
+
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+    },
+    []
+  );
+
+  const handleClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
           <div className="flex items-center justify-between w-full">
             <DialogTitle>Search Chat History</DialogTitle>
             <button
               className="ml-4 px-2 py-0.5 text-xs rounded bg-muted text-muted-foreground hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
-              onClick={onClose}
+              onClick={handleClose}
               aria-label="Close (Esc)"
               type="button"
             >
@@ -59,7 +87,7 @@ export function SearchThreadsModal({
             <Input
               placeholder="Search your chat threads..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               className="pl-9"
               autoFocus
             />
@@ -90,13 +118,18 @@ export function SearchThreadsModal({
                       </div>
                       <div className="space-y-1">
                         {chats.map((chat) => (
-                          <ChatItem
+                          <div
                             key={chat.id}
-                            chat={chat}
-                            isActive={false}
-                            onDelete={() => {}}
-                            setOpenMobile={() => {}}
-                          />
+                            className="cursor-pointer hover:bg-muted/50 rounded-md p-2 transition-colors"
+                            onClick={() => handleChatClick(chat)}
+                          >
+                            <div className="font-medium truncate">
+                              {chat.title}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(chat.createdAt).toLocaleDateString()}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -106,6 +139,12 @@ export function SearchThreadsModal({
                 {filteredChats.length === 0 && searchQuery && (
                   <div className="text-center text-muted-foreground py-8">
                     No chat threads found matching &quot;{searchQuery}&quot;
+                  </div>
+                )}
+
+                {filteredChats.length === 0 && !searchQuery && (
+                  <div className="text-center text-muted-foreground py-8">
+                    Start typing to search your chat history
                   </div>
                 )}
               </motion.div>

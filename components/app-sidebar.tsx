@@ -2,7 +2,7 @@
 
 import type { User } from "next-auth";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 
 import { PlusIcon, SearchIcon } from "@/components/icons";
@@ -19,15 +19,42 @@ import {
 } from "@/components/ui/sidebar";
 import { useHotkeys } from "@/hooks/use-hotkeys";
 import Link from "next/link";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { Tooltip, TooltipTrigger } from "./ui/tooltip";
 import { SearchThreadsModal } from "./search-threads-modal";
 import { ApiKeySettings } from "./ApiKeySettings";
+import type { Chat } from "@/lib/db/schema";
 
 export function AppSidebar({ user }: { user: User | undefined }) {
   const router = useRouter();
   const { setOpenMobile, open } = useSidebar();
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showApiKeySettings, setShowApiKeySettings] = useState(false);
+  const [chats, setChats] = useState<Chat[]>([]);
+
+  // Use useCallback to prevent infinite re-renders
+  const handleChatsUpdate = useCallback((updatedChats: Chat[]) => {
+    setChats(updatedChats);
+  }, []);
+
+  // Memoize the search modal props to prevent re-renders
+  const searchModalProps = useMemo(
+    () => ({
+      isOpen: showSearchModal,
+      onClose: () => setShowSearchModal(false),
+      chats: chats,
+    }),
+    [showSearchModal, chats]
+  );
+
+  // Memoize the API key settings props
+  const apiKeySettingsProps = useMemo(
+    () => ({
+      isOpen: showApiKeySettings,
+      onClose: () => setShowApiKeySettings(false),
+    }),
+    [showApiKeySettings]
+  );
+
   // Keyboard shortcuts
   useHotkeys([
     [
@@ -40,6 +67,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       },
     ],
   ]);
+
   useEffect(() => {
     if (!open) return;
     function handleKeyDown(event: KeyboardEvent) {
@@ -153,21 +181,12 @@ export function AppSidebar({ user }: { user: User | undefined }) {
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
-          <SidebarHistory user={user} />
+          <SidebarHistory user={user} onChatsUpdate={handleChatsUpdate} />
         </SidebarContent>
         <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>
       </Sidebar>
-      {showApiKeySettings && (
-        <ApiKeySettings
-          isOpen={showApiKeySettings}
-          onClose={() => setShowApiKeySettings(false)}
-        />
-      )}
-      <SearchThreadsModal
-        isOpen={showSearchModal}
-        onClose={() => setShowSearchModal(false)}
-        chats={[]} // We'll need to pass the chats from SidebarHistory
-      />
+      {showApiKeySettings && <ApiKeySettings {...apiKeySettingsProps} />}
+      <SearchThreadsModal {...searchModalProps} />
     </>
   );
 }

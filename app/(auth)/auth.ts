@@ -14,6 +14,7 @@ declare module 'next-auth' {
     user: {
       id: string;
       type: UserType;
+      image?: string | null;
     } & DefaultSession['user'];
   }
 
@@ -21,6 +22,7 @@ declare module 'next-auth' {
     id?: string;
     email?: string | null;
     type: UserType;
+    image?: string | null;
   }
 }
 
@@ -28,6 +30,7 @@ declare module 'next-auth/jwt' {
   interface JWT extends DefaultJWT {
     id: string;
     type: UserType;
+    image?: string | null;
   }
 }
 
@@ -82,7 +85,7 @@ export const {
       if (account?.provider === 'google') {
         let [existingUser] = await getUser(user.email!);
         if (!existingUser) {
-          await createUser(user.email!, DUMMY_PASSWORD);
+          await createUser(user.email!, DUMMY_PASSWORD, user.image || undefined);
           [existingUser] = await getUser(user.email!); // fetch the new user
         }
         // Attach the DB user ID to the user object for the jwt callback
@@ -96,6 +99,10 @@ export const {
       if (user) {
         token.id = user.id as string;
         token.type = user.type;
+        // Preserve profile image from OAuth providers
+        if (user.image) {
+          token.image = user.image;
+        }
       }
       // For Google OAuth users, always set type as regular
       if (account?.provider === 'google') {
@@ -107,6 +114,9 @@ export const {
       if (session.user) {
         session.user.id = token.id;
         session.user.type = token.type;
+        if (token.image) {
+          session.user.image = token.image;
+        }
       }
       return session;
     },

@@ -3,7 +3,7 @@
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
 import { useParams, useRouter } from "next/navigation";
 import type { User } from "next-auth";
-import { useState } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import {
@@ -100,7 +100,13 @@ export function getChatHistoryPaginationKey(
   return `/api/history?ending_before=${firstChatFromPage.id}&limit=${PAGE_SIZE}`;
 }
 
-export function SidebarHistory({ user }: { user: User | undefined }) {
+export function SidebarHistory({
+  user,
+  onChatsUpdate,
+}: {
+  user: User | undefined;
+  onChatsUpdate?: (chats: Chat[]) => void;
+}) {
   const { setOpenMobile } = useSidebar();
   const { id } = useParams();
 
@@ -126,7 +132,27 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
     ? paginatedChatHistories.every((page) => page.chats.length === 0)
     : false;
 
-  const handleDelete = async () => {
+  // Memoize the all chats array to prevent unnecessary re-renders
+  const allChats = useMemo(() => {
+    if (!paginatedChatHistories) return [];
+    return paginatedChatHistories.flatMap(
+      (paginatedChatHistory) => paginatedChatHistory.chats
+    );
+  }, [paginatedChatHistories]);
+
+  // Memoize the onChatsUpdate callback
+  const memoizedOnChatsUpdate = useCallback(() => {
+    if (onChatsUpdate) {
+      onChatsUpdate(allChats);
+    }
+  }, [onChatsUpdate, allChats]);
+
+  // Update parent component with current chats
+  useEffect(() => {
+    memoizedOnChatsUpdate();
+  }, [memoizedOnChatsUpdate]);
+
+  const handleDelete = useCallback(async () => {
     const deletePromise = fetch(`/api/chat?id=${deleteId}`, {
       method: "DELETE",
     });
@@ -153,7 +179,7 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
     if (deleteId === id) {
       router.push("/");
     }
-  };
+  }, [deleteId, mutate, id, router]);
 
   if (!user) {
     return (
@@ -215,11 +241,7 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
           <SidebarMenu>
             {paginatedChatHistories &&
               (() => {
-                const chatsFromHistory = paginatedChatHistories.flatMap(
-                  (paginatedChatHistory) => paginatedChatHistory.chats
-                );
-
-                const groupedChats = groupChatsByDate(chatsFromHistory);
+                const groupedChats = groupChatsByDate(allChats);
 
                 return (
                   <div className="flex flex-col gap-6">

@@ -51,18 +51,30 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const provider = searchParams.get('provider');
 
-  if (!provider || !['openai', 'anthropic', 'google', 'mistral', 'openrouter', 'grok', 'cohere', 'deepseek', 'perplexity'].includes(provider)) {
-    return new ChatSDKError('bad_request:api_keys').toResponse();
+  console.log('DELETE API Key request:', { provider, userId: session.user.id });
+
+  if (!provider) {
+    console.error('Missing provider parameter');
+    return new ChatSDKError('bad_request:api_keys', 'Provider parameter is required').toResponse();
+  }
+
+  const validProviders = ['openai', 'anthropic', 'google', 'mistral', 'openrouter', 'grok', 'cohere', 'deepseek', 'perplexity'];
+  if (!validProviders.includes(provider)) {
+    console.error('Invalid provider:', provider);
+    return new ChatSDKError('bad_request:api_keys', `Invalid provider: ${provider}`).toResponse();
   }
 
   try {
-    const result = await deleteApiKey({
+    console.log('Attempting to delete API key for provider:', provider);
+    await deleteApiKey({
       userId: session.user.id,
       provider: provider as any,
     });
 
-    return Response.json(result);
+    console.log('Successfully deleted API key for provider:', provider);
+    return Response.json({ success: true });
   } catch (error) {
-    return new ChatSDKError('bad_request:api_keys').toResponse();
+    console.error('Error deleting API key:', error);
+    return new ChatSDKError('bad_request:api_keys', 'Failed to delete API key').toResponse();
   }
 }

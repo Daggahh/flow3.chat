@@ -6,9 +6,19 @@ interface SelectedModelState {
   setSelectedModelId: (id: string) => void;
 }
 
+const DEFAULT_MODEL = "gemini-2.5-flash";
+
 export const useSelectedModel = create<SelectedModelState>((set) => ({
-  selectedModelId:
-    (typeof window !== "undefined" && localStorage.getItem("selectedModelId")) || "",
+  selectedModelId: (() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("selectedModelId");
+      if (stored) return stored;
+      // Set default if nothing is stored
+      localStorage.setItem("selectedModelId", DEFAULT_MODEL);
+      return DEFAULT_MODEL;
+    }
+    return DEFAULT_MODEL;
+  })(),
   setSelectedModelId: (id: string) => {
     if (typeof window !== "undefined") {
       localStorage.setItem("selectedModelId", id);

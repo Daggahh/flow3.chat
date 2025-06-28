@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
@@ -9,6 +9,8 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import type { ApiKeyProvider } from "@/lib/db/schema";
+import { entitlementsByUserType } from "@/lib/ai/entitlements";
+import type { UserType } from "@/app/(auth)/auth";
 
 const PROVIDERS = [
   { id: "openai", name: "OpenAI" },
@@ -40,6 +42,8 @@ export function ApiKeySettings({
   } = useApiKeys();
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
+  const [messageCount, setMessageCount] = useState<number>(0);
+  const [loadingUsage, setLoadingUsage] = useState(false);
   const { data: session } = useSession();
 
   useEffect(() => {
@@ -57,41 +61,100 @@ export function ApiKeySettings({
     }
   }, [isOpen, apiKeys]);
 
-  const handleInputChange = (provider: string, value: string) => {
-    // If the user starts typing, replace the masked value
+  // Fetch message count when modal opens
+  useEffect(() => {
+    if (isOpen && session?.user?.id) {
+      setLoadingUsage(true);
+      fetch(`/api/usage?userId=${session.user.id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setMessageCount(data.messageCount || 0);
+        })
+        .catch(() => {
+          setMessageCount(0);
+        })
+        .finally(() => {
+          setLoadingUsage(false);
+        });
+    }
+  }, [isOpen, session?.user?.id]);
+
+  const handleInputChange = useCallback((provider: string, value: string) => {
     setInputs((prev) => ({ ...prev, [provider]: value }));
-  };
+  }, []);
 
-  const handleSave = async (provider: string) => {
-    setSaving((prev) => ({ ...prev, [provider]: true }));
-    try {
-      await saveApiKey(provider as any, inputs[provider]);
-      setInputs((prev) => ({ ...prev, [provider]: "" }));
-    } catch (e) {
-      // toast handled in context
-    } finally {
-      setSaving((prev) => ({ ...prev, [provider]: false }));
-    }
-  };
+  const handleSave = useCallback(
+    async (provider: string) => {
+      setSaving((prev) => ({ ...prev, [provider]: true }));
+      try {
+        await saveApiKey(provider as any, inputs[provider]);
+        setInputs((prev) => ({ ...prev, [provider]: "" }));
+      } catch (e) {
+        // toast handled in context
+      } finally {
+        setSaving((prev) => ({ ...prev, [provider]: false }));
+      }
+    },
+    [saveApiKey, inputs]
+  );
 
-  const handleDelete = async (provider: string) => {
-    setSaving((prev) => ({ ...prev, [provider]: true }));
-    try {
-      await deleteApiKey(provider as any);
-    } catch (e) {
-      // toast handled in context
-    } finally {
-      setSaving((prev) => ({ ...prev, [provider]: false }));
-    }
-  };
+  const handleDelete = useCallback(
+    async (provider: string) => {
+      setSaving((prev) => ({ ...prev, [provider]: true }));
+      try {
+        await deleteApiKey(provider as any);
+      } catch (e) {
+        // toast handled in context
+      } finally {
+        setSaving((prev) => ({ ...prev, [provider]: false }));
+      }
+    },
+    [deleteApiKey]
+  );
 
-  // User info and message limit (dummy for now, replace with real logic)
+  const handleEditClick = useCallback(
+    (provider: string) => {
+      handleEdit(provider as ApiKeyProvider);
+    },
+    [handleEdit]
+  );
+
+  const handleCancelEditClick = useCallback(
+    (provider: string) => {
+      handleCancelEdit(provider as ApiKeyProvider);
+    },
+    [handleCancelEdit]
+  );
+
+  // User info and message limit
   const user = session?.user;
   const isGuest = user?.email?.startsWith("guest-");
-  const userType = isGuest ? "Guest" : "Regular";
-  // TODO: Replace with real message limit logic
-  const messageLimit = isGuest ? 10 : 20;
-  const messagesUsed = 0; // TODO: fetch real usage
+  const userType: UserType = isGuest ? "guest" : "regular";
+  const entitlements = entitlementsByUserType[userType];
+  const messageLimit = entitlements.maxMessagesPerDay;
+  const messagesUsed = loadingUsage ? 0 : messageCount;
+
+  // Memoize user info
+  const userInfo = useMemo(
+    () => ({
+      image:
+        user?.image || `https://avatar.vercel.sh/${user?.email || "guest"}`,
+      email: user?.email || "Guest",
+      userType,
+    }),
+    [user?.image, user?.email, userType]
+  );
+
+  // Memoize message limit info
+  const messageLimitInfo = useMemo(
+    () => ({
+      limit: messageLimit,
+      used: messagesUsed,
+      loading: loadingUsage,
+      isGuest,
+    }),
+    [messageLimit, messagesUsed, loadingUsage, isGuest]
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -103,28 +166,32 @@ export function ApiKeySettings({
         <aside className="w-full md:w-72 bg-muted/40 dark:bg-zinc-800/40 border-r border-border/50 flex flex-col items-center py-8 px-6 gap-6 shrink-0">
           <div className="flex flex-col items-center gap-2">
             <Image
-              src={`https://avatar.vercel.sh/${user?.email || "guest"}`}
-              alt={user?.email || "User Avatar"}
+              src={userInfo.image}
+              alt={userInfo.email}
               width={56}
               height={56}
               className="rounded-full border border-border"
             />
             <div className="font-semibold text-base truncate max-w-[180px]">
-              {user?.email || "Guest"}
+              {userInfo.email}
             </div>
-            <div className="text-xs text-muted-foreground">{userType} user</div>
+            <div className="text-xs text-muted-foreground">
+              {userInfo.userType} user
+            </div>
           </div>
           <div className="w-full flex flex-col items-center bg-white dark:bg-zinc-900 rounded-lg border border-border/30 p-4">
             <div className="text-xs text-muted-foreground mb-1">
               Message Limit
             </div>
             <div className="text-2xl font-bold">
-              {messagesUsed} / {messageLimit}
+              {messageLimitInfo.loading
+                ? "..."
+                : `${messageLimitInfo.used} / ${messageLimitInfo.limit}`}
             </div>
             <div className="text-xs text-muted-foreground text-center mt-1">
-              {isGuest
-                ? "Free Gemini usage: 10 messages/day. Sign in for more."
-                : "Signed in: 20 messages/day. Add your own API key for unlimited usage."}
+              {messageLimitInfo.isGuest
+                ? `Free Gemini models: ${messageLimitInfo.limit} messages/day. Sign in for more.`
+                : `Free Gemini models: ${messageLimitInfo.limit} messages/day. Add your own API key for unlimited usage.`}
             </div>
           </div>
         </aside>
@@ -194,7 +261,7 @@ export function ApiKeySettings({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleEdit(provider.id as ApiKeyProvider)}
+                      onClick={() => handleEditClick(provider.id)}
                       className="transition-transform group-hover:scale-105 focus:scale-105"
                     >
                       Edit
@@ -226,9 +293,7 @@ export function ApiKeySettings({
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() =>
-                        handleCancelEdit(provider.id as ApiKeyProvider)
-                      }
+                      onClick={() => handleCancelEditClick(provider.id)}
                       className="ml-2"
                     >
                       Cancel

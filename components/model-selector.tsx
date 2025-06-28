@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { ChatModel } from "@/lib/ai/models";
 import { Button } from "@/components/ui/button";
 import { useProviderIcon } from "@/hooks/use-provider-icon";
@@ -75,6 +75,7 @@ export function ModelSelectorQuickPick({
   selectedModelId,
 }: ModelSelectorQuickPickProps) {
   const { allCapabilities } = useModelCapabilities(favourites);
+
   const filtered = useMemo(() => {
     let models = favourites.filter(
       (m) =>
@@ -95,6 +96,41 @@ export function ModelSelectorQuickPick({
     useSelectedModel();
   useSyncSelectedModelCookie(currentSelectedModelId);
 
+  const handleSelect = useCallback(
+    (id: string) => {
+      onSelect(id);
+    },
+    [onSelect]
+  );
+
+  const handleShowAll = useCallback(() => {
+    onShowAll();
+  }, [onShowAll]);
+
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearch(e.target.value);
+    },
+    [setSearch]
+  );
+
+  const handleClearSearch = useCallback(() => {
+    setSearch("");
+  }, [setSearch]);
+
+  const handleFilterToggle = useCallback(
+    (cap: string) => {
+      if (filterList.includes(cap))
+        setFilterList(filterList.filter((c) => c !== cap));
+      else setFilterList([...filterList, cap]);
+    },
+    [filterList, setFilterList]
+  );
+
+  const handleClearFilters = useCallback(() => {
+    setFilterList([]);
+  }, [setFilterList]);
+
   return (
     <div className="p-0 w-96">
       <div className="p-2 border-b flex items-center gap-2">
@@ -106,12 +142,12 @@ export function ModelSelectorQuickPick({
             className="flex-1 bg-transparent border-0 border-b-2 border-muted focus:border-primary outline-none transition-colors px-2 py-1 pl-8"
             placeholder="Search models..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
           />
           {search && (
             <button
               className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              onClick={() => setSearch("")}
+              onClick={handleClearSearch}
               tabIndex={-1}
             >
               <FiX size={16} />
@@ -133,7 +169,7 @@ export function ModelSelectorQuickPick({
                   "relative flex items-center gap-2 rounded-lg px-1.5 py-2.5 mb-1 transition-colors group cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 border",
                   model.id === selectedModelId && "border-primary"
                 )}
-                onClick={() => onSelect(model.id)}
+                onClick={() => handleSelect(model.id)}
               >
                 <span className="flex items-center gap-2">
                   {useProviderIcon(model.provider)}
@@ -159,7 +195,7 @@ export function ModelSelectorQuickPick({
           size="sm"
           variant="ghost"
           className="flex items-center gap-1"
-          onClick={onShowAll}
+          onClick={handleShowAll}
         >
           <FiChevronRight className="w-4 h-4" /> Show all
         </Button>
@@ -179,7 +215,7 @@ export function ModelSelectorQuickPick({
             <DropdownMenuItem
               onSelect={(event) => {
                 event.preventDefault();
-                setFilterList([]);
+                handleClearFilters();
               }}
               className={
                 filterList.length === 0 ? "font-bold text-primary" : ""
@@ -195,9 +231,7 @@ export function ModelSelectorQuickPick({
                 key={cap}
                 onSelect={(event) => {
                   event.preventDefault();
-                  if (filterList.includes(cap))
-                    setFilterList(filterList.filter((c) => c !== cap));
-                  else setFilterList([...filterList, cap]);
+                  handleFilterToggle(cap);
                 }}
                 className={
                   filterList.includes(cap) ? "font-bold text-primary" : ""
@@ -230,23 +264,83 @@ export function ModelSelectorFullCatalog({
   selectedModelId,
 }: ModelSelectorFullCatalogProps) {
   const { allCapabilities } = useModelCapabilities(availableModels);
-  const filteredFavourites = favourites.filter(
-    (m) =>
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
-      m.id.toLowerCase().includes(search.toLowerCase())
+
+  const filteredFavourites = useMemo(
+    () =>
+      favourites.filter(
+        (m) =>
+          m.name.toLowerCase().includes(search.toLowerCase()) ||
+          m.id.toLowerCase().includes(search.toLowerCase())
+      ),
+    [favourites, search]
   );
 
   // Filter availableModels by search and not in favourites
-  const filteredAvailableModels = availableModels.filter(
-    (model) =>
-      !favourites.some((fav) => fav.id === model.id) &&
-      (model.name.toLowerCase().includes(search.toLowerCase()) ||
-        model.id.toLowerCase().includes(search.toLowerCase()))
+  const filteredAvailableModels = useMemo(
+    () =>
+      availableModels.filter(
+        (model) =>
+          !favourites.some((fav) => fav.id === model.id) &&
+          (model.name.toLowerCase().includes(search.toLowerCase()) ||
+            model.id.toLowerCase().includes(search.toLowerCase()))
+      ),
+    [availableModels, favourites, search]
   );
 
   const { selectedModelId: currentSelectedModelId, setSelectedModelId } =
     useSelectedModel();
   useSyncSelectedModelCookie(currentSelectedModelId);
+
+  const handleSelect = useCallback(
+    (id: string) => {
+      onSelect(id);
+    },
+    [onSelect]
+  );
+
+  const handleBack = useCallback(() => {
+    onBack();
+  }, [onBack]);
+
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearch(e.target.value);
+    },
+    [setSearch]
+  );
+
+  const handleClearSearch = useCallback(() => {
+    setSearch("");
+  }, [setSearch]);
+
+  const handleFilterToggle = useCallback(
+    (cap: string) => {
+      if (filterList.includes(cap))
+        setFilterList(filterList.filter((c) => c !== cap));
+      else setFilterList([...filterList, cap]);
+    },
+    [filterList, setFilterList]
+  );
+
+  const handleClearFilters = useCallback(() => {
+    setFilterList([]);
+  }, [setFilterList]);
+
+  const handlePin = useCallback(
+    (id: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      onPin(id);
+    },
+    [onPin]
+  );
+
+  const handleUnpin = useCallback(
+    (id: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      onUnpin(id);
+    },
+    [onUnpin]
+  );
 
   return (
     <div className="p-0 w-[40rem] max-w-[90vw]">
@@ -259,12 +353,12 @@ export function ModelSelectorFullCatalog({
             className="flex-1 bg-transparent border-0 border-b-2 border-muted focus:border-primary outline-none transition-colors px-2 py-1 pl-8 pr-8"
             placeholder="Search models..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
           />
           {search && (
             <button
               className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              onClick={() => setSearch("")}
+              onClick={handleClearSearch}
               tabIndex={-1}
             >
               <FiX size={16} />
@@ -289,17 +383,14 @@ export function ModelSelectorFullCatalog({
                         model.id === selectedModelId &&
                           "ring-2 ring-blue-500 border-primary"
                       )}
-                      onClick={() => onSelect(model.id)}
+                      onClick={() => handleSelect(model.id)}
                       style={{ overflow: "visible" }}
                     >
                       {/* Pin icon (slashed) at top right */}
                       <span className="absolute top-2 right-2 z-10">
                         <button
                           className="absolute -top-3 right-1/2 translate-x-1/2 bg-white/90 rounded shadow border border-blue-200 p-1 opacity-0 group-hover:opacity-100 transition z-20"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onUnpin(model.id);
-                          }}
+                          onClick={(e) => handleUnpin(model.id, e)}
                           title="Unpin from favourites"
                         >
                           <FaThumbtackSlash
@@ -345,17 +436,14 @@ export function ModelSelectorFullCatalog({
                           model.id === selectedModelId &&
                             "ring-2 ring-blue-500 border-primary"
                         )}
-                        onClick={() => onSelect(model.id)}
+                        onClick={() => handleSelect(model.id)}
                         style={{ overflow: "visible" }}
                       >
                         {/* Pin icon at top right */}
                         <span className="absolute top-2 right-2 z-10">
                           <button
                             className="absolute -top-3 right-1/2 translate-x-1/2 bg-white/90 rounded shadow border border-blue-200 p-1 opacity-0 group-hover:opacity-100 transition z-20"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onPin(model.id);
-                            }}
+                            onClick={(e) => handlePin(model.id, e)}
                             title="Pin to favourites"
                           >
                             <FaThumbtack className="w-4 h-4 text-black" />
@@ -388,7 +476,7 @@ export function ModelSelectorFullCatalog({
             size="sm"
             variant="ghost"
             className="flex items-center gap-1"
-            onClick={onBack}
+            onClick={handleBack}
           >
             <FiChevronLeft className="w-4 h-4" /> Favourites
           </Button>
@@ -412,7 +500,7 @@ export function ModelSelectorFullCatalog({
               <DropdownMenuItem
                 onSelect={(event) => {
                   event.preventDefault();
-                  setFilterList([]);
+                  handleClearFilters();
                 }}
                 className={
                   filterList.length === 0 ? "font-bold text-primary" : ""
@@ -428,9 +516,7 @@ export function ModelSelectorFullCatalog({
                   key={cap}
                   onSelect={(event) => {
                     event.preventDefault();
-                    if (filterList.includes(cap))
-                      setFilterList(filterList.filter((c) => c !== cap));
-                    else setFilterList([...filterList, cap]);
+                    handleFilterToggle(cap);
                   }}
                   className={
                     filterList.includes(cap) ? "font-bold text-primary" : ""

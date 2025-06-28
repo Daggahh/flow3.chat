@@ -89,21 +89,21 @@ function PureMultimodalInput({
     }
   }, []);
 
-  const adjustHeight = () => {
+  const adjustHeight = useCallback(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${
         textareaRef.current.scrollHeight + 2
       }px`;
     }
-  };
+  }, []);
 
-  const resetHeight = () => {
+  const resetHeight = useCallback(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = "98px";
     }
-  };
+  }, []);
 
   const [localStorageInput, setLocalStorageInput] = useLocalStorage(
     "input",
@@ -128,12 +128,15 @@ function PureMultimodalInput({
     setLocalStorageInput(input);
   }, [input, setLocalStorageInput]);
 
-  const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (event.target.value !== input) {
-      setInput(event.target.value);
-    }
-    adjustHeight();
-  };
+  const handleInput = useCallback(
+    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+      if (event.target.value !== input) {
+        setInput(event.target.value);
+      }
+      adjustHeight();
+    },
+    [input, setInput, adjustHeight]
+  );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
@@ -199,9 +202,10 @@ function PureMultimodalInput({
     chatId,
     useWebSearch,
     selectedModelId,
+    resetHeight,
   ]);
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = useCallback(async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
 
@@ -226,7 +230,7 @@ function PureMultimodalInput({
     } catch (error) {
       toast.error("Failed to upload file, please try again!");
     }
-  };
+  }, []);
 
   const handleFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
@@ -251,40 +255,48 @@ function PureMultimodalInput({
         setUploadQueue([]);
       }
     },
-    [setAttachments]
+    [setAttachments, uploadFile]
   );
 
-  const handleWebSearch = async () => {
+  const handleWebSearch = useCallback(() => {
     if (!input.trim()) return;
     setUseWebSearch((prev) => !prev);
-  };
+  }, [input]);
 
-  const handlePin = async (id: string) => {
-    if (favourites.length >= 10) {
-      toast.error("You can only pin up to 10 models.");
-      return;
-    }
-    const model = availableChatModels.find((m) => m.id === id);
-    if (!model) return;
-    await db.model_favourites.add({
-      id: `${id}-fav`,
-      modelId: id,
-      createdAt: new Date(),
-      synced: false,
-    });
-    setFavourites((favs) => [...favs, model]);
-  };
+  const handlePin = useCallback(
+    async (id: string) => {
+      if (favourites.length >= 10) {
+        toast.error("You can only pin up to 10 models.");
+        return;
+      }
+      const model = availableChatModels.find((m) => m.id === id);
+      if (!model) return;
+      await db.model_favourites.add({
+        id: `${id}-fav`,
+        modelId: id,
+        createdAt: new Date(),
+        synced: false,
+      });
+      setFavourites((favs) => [...favs, model]);
+    },
+    [favourites.length, availableChatModels]
+  );
 
-  const handleUnpin = async (id: string) => {
+  const handleUnpin = useCallback(async (id: string) => {
     await db.model_favourites.where("modelId").equals(id).delete();
     setFavourites((favs) => favs.filter((f) => f.id !== id));
-  };
+  }, []);
 
   useEffect(() => {
     if (status === "submitted") {
       scrollToBottom();
     }
   }, [status, scrollToBottom]);
+
+  // Memoize the selected model info
+  const selectedModelInfo = useMemo(() => {
+    return availableChatModels.find((m) => m.id === selectedModelId);
+  }, [availableChatModels, selectedModelId]);
 
   return (
     <div className="relative w-full flex flex-col gap-4">
@@ -399,13 +411,9 @@ function PureMultimodalInput({
                   className="rounded-md p-[7px] h-fit flex items-center gap-2"
                   variant="outline"
                 >
-                  {useProviderIcon(
-                    availableChatModels.find((m) => m.id === selectedModelId)
-                      ?.provider || ""
-                  )}
+                  {useProviderIcon(selectedModelInfo?.provider || "")}
                   <span className="ml-1">
-                    {availableChatModels.find((m) => m.id === selectedModelId)
-                      ?.name || selectedModelId}
+                    {selectedModelInfo?.name || selectedModelId}
                   </span>
                   <FiChevronDown
                     className={
