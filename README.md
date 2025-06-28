@@ -120,6 +120,8 @@ OPENROUTER_API_KEY=...
 
 Contributions are welcome! Please open issues or pull requests for bugs, features, or improvements.
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
 ---
 
 ## License
@@ -131,5 +133,3 @@ Apache 2.0. See [LICENSE](LICENSE) for details.
 ---
 
 > Not affiliated with Vercel or T3. This is a community-driven, privacy-first AI chat platform.
-
-[Connect with me on LinkedIn](https://www.linkedin.com/in/your-linkedin/) (replace with your link)
